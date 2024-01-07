@@ -11,10 +11,16 @@ set(SOURCES main.cpp ChessBoardState.cpp Engine.cpp)
 include_directories(
         ${PROJECT_SOURCE_DIR}
         ${PROJECT_SOURCE_DIR}/third-party/glog/include
+        ${PROJECT_SOURCE_DIR}/third-party/gflags/include
 )
 
+
+
 set(CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/third-party/)
+find_package (gflags REQUIRED)
 find_package (glog 0.6.0 REQUIRED)
+
+
 
 # 生成可执行文件
 add_executable(${PROJECT_NAME} ${SOURCES})
@@ -23,6 +29,7 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 target_link_libraries(${PROJECT_NAME}
         common_lib
         glog::glog
+        gflags
         )
 
 

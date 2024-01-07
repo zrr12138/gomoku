@@ -24,12 +24,15 @@ namespace gomoku {
         ChessMove GetResult(); //获取搜索结果,该函数不应该中断搜索，可以反复调用获取最新的搜索结果
 //        uint64_t GetSearchDepth();
         int64_t Evaluate(const ChessBoardState &board);
+
+        bool Stop();
     private:
         struct SearchCtx{
             ChessBoardState board;
             std::vector<ChessMove> moves_;
             uint32_t current_depth;
             uint32_t depth_limit;
+            uint64_t search_node;
         };
         common::TaskThreadPool<> taskThreadPool;
         std::mutex map_mutex_;//保护下面两个数据结构

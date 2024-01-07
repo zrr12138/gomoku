@@ -11,7 +11,7 @@ void EvaluateManualTest();
 
 void EngineManualTest();
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
     // Initialize Google’s logging library.
     google::InitGoogleLogging("gomoku");
     FLAGS_log_dir = ".";
@@ -32,13 +32,18 @@ void EngineManualTest() {
             std::cout << "请输入下一步棋的坐标:" << std::endl;
             int x, y;
             std::cin >> x >> y;
+            LOG(INFO) << "user move x:" << x << "y:" << y;
             board.Move(gomoku::ChessMove(is_black, x, y));
 
         } else {
-            engine.StartSearch(board, false);
-            std::this_thread::sleep_for(std::chrono::seconds(3));
+            if (!engine.StartSearch(board, false)) {
+                break;
+            }
+            std::this_thread::sleep_for(std::chrono::seconds(10));
             auto move = engine.GetResult();
             board.Move(move);
+            std::cout << "engine move:" << move;
+            engine.Stop();
         }
         is_black = !is_black;
     }

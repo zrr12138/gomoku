@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <vector>
 #include <map>
+#include <ostream>
+
 #ifndef GOMOKU_CHESSBOARDSTATE_H
 #define GOMOKU_CHESSBOARDSTATE_H
 enum Chess {
@@ -17,8 +19,11 @@ namespace gomoku {
         bool is_black;
         uint32_t x, y;
 
+        friend std::ostream &operator<<(std::ostream &os, const ChessMove &move);
+
         ChessMove(bool isBlack, uint32_t x, uint32_t y);
         ChessMove();
+
     };
 
     class ChessBoardState {
@@ -28,6 +33,8 @@ namespace gomoku {
         void update_is_end_from(uint32_t x,uint32_t y); //以某个点为中心判断游戏是否结束。
     public:
         ChessBoardState();
+
+        friend std::ostream &operator<<(std::ostream &os, const ChessBoardState &state);
 
         uint64_t hash() const;
 

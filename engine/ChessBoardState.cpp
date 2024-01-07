@@ -5,6 +5,7 @@
 #include <cassert>
 #include "ChessBoardState.h"
 #include <iostream>
+#include "glog/logging.h"
 
 namespace gomoku {
 
@@ -30,6 +31,7 @@ namespace gomoku {
         }
         board[x][y] = EMPTY;
         //判断局面是否结束
+        is_end=0;
         for (int i = 0; i < BOARD_SIZE; i++) {
             for (int j = 0; j < BOARD_SIZE; j++) {
                 if (board[i][j] != EMPTY) {
@@ -41,16 +43,22 @@ namespace gomoku {
     }
 
     bool ChessBoardState::Move(ChessMove move) {
-        assert(move.x<BOARD_SIZE);
-        assert(move.y<BOARD_SIZE);
+        assert(move.x < BOARD_SIZE);
+        assert(move.y < BOARD_SIZE);
         auto &chess = board[move.x][move.y];
         if (chess != EMPTY) {
+            LOG(ERROR) << "move failed, move: " << move;
             return false;
         }
+        if (is_end) {
+            this->PrintOnTerminal();
+            std::cout << move << std::endl;
+        }
         assert(is_end == 0);
+
         chess = move.is_black ? BLACK : WHITE;
         update_is_end_from(move.x, move.y);
-        return is_end;
+        return true;
     }
 
     int ChessBoardState::IsEnd() const {
@@ -102,6 +110,8 @@ namespace gomoku {
         for (int i = 0; i < 8; i += 2) {
             if (cnt[i] + cnt[i + 1] >= 4) {
                 is_end = board[x][y] == BLACK ? 1 : -1;
+//                LOG(INFO) << __func__ << " board is_end:" << is_end << " x:" << x << " y:" << y << " i:" << i
+//                          << "board:" << *this;
                 break;
             }
         }
@@ -142,38 +152,49 @@ namespace gomoku {
     }
 
     void ChessBoardState::PrintOnTerminal() {
-        std::cout<<"  ";
-        for(int i=0;i<BOARD_SIZE;i++){
-            std::cout<<std::hex<<i<<" ";
-        }
-        std::cout<<std::endl;
+        std::cout << *this;
+    }
+
+    std::ostream &operator<<(std::ostream &os, const ChessBoardState &state) {
+        os << std::endl;
+        os << "  ";
         for (int i = 0; i < BOARD_SIZE; i++) {
-            std::cout<<i<<" ";
+            os << std::hex << i << " ";
+        }
+        os << std::endl;
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            os << i << " ";
             for (int j = 0; j < BOARD_SIZE; j++) {
                 char c;
-                switch (board[i][j]) {
+                switch (state.board[i][j]) {
                     case EMPTY:
-                        c='*';
+                        c = '*';
                         break;
                     case BLACK:
-                        c='X';
+                        c = 'X';
                         break;
                     case WHITE:
-                        c='O';
+                        c = 'O';
                         break;
                     default:
                         assert(0);
                 }
-                std::cout<<c<<" ";
+                os << c << " ";
             }
-            std::cout<<std::endl;
+            os << std::endl;
         }
-        std::cout<<std::dec<<std::endl;
+        os << std::dec << std::endl;
+        return os;
     }
 
     ChessMove::ChessMove(bool isBlack, uint32_t x, uint32_t y) : is_black(isBlack), x(x), y(y) {
     }
 
-    ChessMove::ChessMove():is_black(true),x(UINT32_MAX),y(UINT32_MAX) {
+    ChessMove::ChessMove() : is_black(true), x(UINT32_MAX), y(UINT32_MAX) {
+    }
+
+    std::ostream &operator<<(std::ostream &os, const ChessMove &move) {
+        os << "is_black: " << move.is_black << " x: " << move.x << " y: " << move.y;
+        return os;
     }
 }

@@ -10,8 +10,10 @@ set(SOURCES main.cpp ChessBoardState.cpp Engine.cpp)
 # 添加头文件路径
 include_directories(
         ${PROJECT_SOURCE_DIR}
+        ${PROJECT_SOURCE_DIR}/third-party/glog/include
 )
 
+set(CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/third-party/)
 find_package (glog 0.6.0 REQUIRED)
 
 # 生成可执行文件

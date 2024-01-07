@@ -12,6 +12,7 @@
 #include <chrono>
 #include <thread>
 #include <set>
+#include "glog/logging.h"
 
 namespace gomoku {
 
@@ -58,6 +59,7 @@ namespace gomoku {
     }
 
     void Engine::StartSearchInternal(const ChessBoardState &state, bool black_first) {
+        LOG(INFO) << __func__ << "board:" << state.hash() << "black_first:" << black_first;
         depth2res_.clear();
         stop_.store(false);
         uint64_t depth = 1;
@@ -66,6 +68,7 @@ namespace gomoku {
             ctx->board = state;
             ctx->current_depth = 0;
             ctx->depth_limit = depth;
+            LOG(INFO) << "start dfs with board:" << ctx->board.hash() << "depth_limit:" << ctx->depth_limit;
             auto res = DFS(ctx.get(), black_first, INT64_MAX, INT64_MIN);
             if (!stop_.load()) { //防止最后一次搜索是被打断的
                 std::unique_lock<std::mutex> guard(map_mutex_);
@@ -86,8 +89,13 @@ namespace gomoku {
     }
 
     bool Engine::StartSearch(const ChessBoardState &state, bool black_first) {
+        LOG(INFO) << __func__ << " board: " << state.hash() << "black_first:" << black_first;
         stop_.store(true);
+        auto start = std::chrono::high_resolution_clock::now();
         taskThreadPool.Stop();
+        auto end = std::chrono::high_resolution_clock::now();
+        LOG(INFO) << "task thread pool stop in "
+                  << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms";
         stop_.store(false);
         if (state.IsEnd()) {
             return false;
@@ -130,7 +138,7 @@ namespace gomoku {
             for (int k = 0; k < 8; k++) {
                 int i = x, j = y;
                 auto delta = dir[k];
-                std::vector<int>seq;
+                std::vector<int> seq;
                 while (true) {
                     int next_i = i + delta.first;
                     int next_j = j + delta.second;
@@ -152,34 +160,33 @@ namespace gomoku {
                 }
                 dir2seq.emplace_back(std::move(seq));
             }
-            auto EvaluateSeq=[](const std::vector<int> &seq)->int64_t{
-                if(seq.size()<5){
+            auto EvaluateSeq = [](const std::vector<int> &seq) -> int64_t {
+                if (seq.size() < 5) {
                     return 0;
                 }
-                int64_t res=0;
-                int64_t temp=0;
-                for(auto it:seq){
-                    if(it){
+                int64_t res = 0;
+                int64_t temp = 0;
+                for (auto it: seq) {
+                    if (it) {
                         temp++;
+                    } else {
+                        temp = std::max(temp - 1, static_cast<int64_t>(0));
                     }
-                    else{
-                        temp=std::max(temp-1,static_cast<int64_t>(0));
-                    }
-                    res+=temp;
+                    res += temp;
                 }
                 return res;
             };
-            for(int k=0;k<8;k+=2){
-                std::vector<int>seq;
-                seq.insert(seq.end(),dir2seq[k].rbegin(),dir2seq[k].rend());
+            for (int k = 0; k < 8; k += 2) {
+                std::vector<int> seq;
+                seq.insert(seq.end(), dir2seq[k].rbegin(), dir2seq[k].rend());
                 seq.emplace_back(1);
-                seq.insert(seq.end(),dir2seq[k+1].begin(),dir2seq[k+1].end());
-                score+=EvaluateSeq(seq);
+                seq.insert(seq.end(), dir2seq[k + 1].begin(), dir2seq[k + 1].end());
+                score += EvaluateSeq(seq);
             }
-            if(it.second==WHITE){
-                score=-score;
+            if (it.second == WHITE) {
+                score = -score;
             }
-            result+=score;
+            result += score;
         }
         return result;
     }

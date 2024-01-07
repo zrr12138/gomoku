@@ -13,11 +13,10 @@ void EngineManualTest();
 
 int main(int argc, char* argv[]) {
     // Initialize Google¡¯s logging library.
-    std::cout<<"hello world"<<std::endl;
-    google::InitGoogleLogging("zrr11111");
-    std::cout<<"hello world"<<std::endl;
-    // ...
-    LOG(INFO) << "Found " << 4 << " cookies";
+    google::InitGoogleLogging("gomoku");
+    FLAGS_log_dir = ".";
+    FLAGS_v = 2;
+    EngineManualTest();
 
 }
 

@@ -32,7 +32,7 @@
 
 #include "common/uncopyable.h"
 
-namespace curve {
+
 namespace common {
 
 class ThreadPool : public Uncopyable {
@@ -53,6 +53,5 @@ class ThreadPool : public Uncopyable {
 };
 
 }  // namespace common
-}  // namespace curve
 
 #endif  // SRC_COMMON_CONCURRENT_THREAD_POOL_H_

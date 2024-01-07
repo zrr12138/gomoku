@@ -22,7 +22,7 @@
 
 #include "common/thread_pool.h"
 
-namespace curve {
+
 namespace common {
 
 ThreadPool::ThreadPool()
@@ -66,4 +66,4 @@ int ThreadPool::NumOfThreads() {
 }
 
 }  // namespace common
-}  // namespace curve
+

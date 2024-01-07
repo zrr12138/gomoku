@@ -23,7 +23,7 @@
 #ifndef SRC_COMMON_UNCOPYABLE_H_
 #define SRC_COMMON_UNCOPYABLE_H_
 
-namespace curve {
+
 namespace common {
 
 class Uncopyable {
@@ -37,6 +37,6 @@ class Uncopyable {
 };
 
 }  // namespace common
-}  // namespace curve
+
 
 #endif  // SRC_COMMON_UNCOPYABLE_H_

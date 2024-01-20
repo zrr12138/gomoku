@@ -4,22 +4,15 @@ project(gomoku)
 set(CMAKE_CXX_STANDARD 14)
 
 add_subdirectory(common)
+add_subdirectory(third-party)
 # 添加源文件
 set(SOURCES main.cpp ChessBoardState.cpp Engine.cpp)
 
 # 添加头文件路径
 include_directories(
         ${PROJECT_SOURCE_DIR}
-        ${PROJECT_SOURCE_DIR}/third-party/glog/include
-        ${PROJECT_SOURCE_DIR}/third-party/gflags/include
+        ${PROJECT_SOURCE_DIR}/third-party/glog/src
 )
-
-
-
-set(CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/third-party/)
-find_package (gflags REQUIRED)
-find_package (glog 0.6.0 REQUIRED)
-
 
 
 # 生成可执行文件
@@ -29,7 +22,6 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 target_link_libraries(${PROJECT_NAME}
         common_lib
         glog::glog
-        gflags
         )
 
 

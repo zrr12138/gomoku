@@ -24,7 +24,7 @@ namespace gomoku {
         ChessMove GetResult(); //获取搜索结果,该函数不应该中断搜索，可以反复调用获取最新的搜索结果
 //        uint64_t GetSearchDepth();
         int64_t Evaluate(const ChessBoardState &board);
-
+        int64_t CsyEvaluate(const ChessBoardState &board);
         bool Stop();
     private:
         struct SearchCtx{

@@ -14,18 +14,19 @@
 #include "common/uncopyable.h"
 #include <atomic>
 #include "common/task_thread_pool.h"
+
 namespace gomoku {
 
     class Engine {
-
     public:
+        Engine();
         bool StartSearch(const ChessBoardState &state, bool black_first);//非阻塞,指定先手和局面开始搜索，中断上一次的搜索
         // json GetSearchTree(uint32_t depth); //指定深度打印搜索树信息
         ChessMove GetResult(); //获取搜索结果,该函数不应该中断搜索，可以反复调用获取最新的搜索结果
 //        uint64_t GetSearchDepth();
-        int64_t Evaluate(const ChessBoardState &board);
-        int64_t CsyEvaluate(const ChessBoardState &board);
         bool Stop();
+        int64_t Evaluate(const ChessBoardState &board);
+        void SetEvaluateFunction(std::function<int64_t(const ChessBoardState &board)> fun);
     private:
         struct SearchCtx{
             ChessBoardState board;
@@ -39,6 +40,7 @@ namespace gomoku {
         std::mutex map_mutex_;//保护下面两个数据结构
         std::map<uint64_t ,std::pair<ChessMove,int64_t> >depth2res_;
         std::atomic<bool> stop_;
+        std::function<int64_t(const ChessBoardState &board)> evaluate_;
 
         //TODO(zrr12138) 设置为std::function，可以动态设置评估函数
         /**

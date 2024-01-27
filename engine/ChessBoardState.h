@@ -33,7 +33,7 @@ namespace gomoku {
         void update_is_end_from(uint32_t x,uint32_t y); //以某个点为中心判断游戏是否结束。
     public:
         ChessBoardState();
-        explicit ChessBoardState(const std::pair<std::vector<ChessMove>,std::vector<ChessMove>> &moves);
+        explicit ChessBoardState(const std::vector<ChessMove> &moves);
 
         friend std::ostream &operator<<(std::ostream &os, const ChessBoardState &state);
 

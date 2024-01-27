@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 14)
 add_subdirectory(common)
 add_subdirectory(third-party)
 # 添加源文件
-set(SOURCES main.cpp ChessBoardState.cpp Engine.cpp)
+set(SOURCES main.cpp ChessBoardState.cpp Engine.cpp Evaluate.cpp)
 
 # 添加头文件路径
 include_directories(

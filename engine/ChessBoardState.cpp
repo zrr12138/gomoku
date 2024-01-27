@@ -25,20 +25,10 @@ namespace gomoku {
         return board[x][y];
     }
 
-    ChessBoardState::ChessBoardState(const std::pair<std::vector<ChessMove>,std::vector<ChessMove>> &moves) : is_end(0) {
-        assert(moves.first.size() == moves.second.size() || moves.first.size()-moves.second.size() == 1);
-        if(!IsEmpty())
-            ClearBoard();
-        for (int i = 0; i < moves.first.size()-1; i++){
-            assert(ChessBoardState::Move(moves.first[i]));
-            assert(ChessBoardState::Move(moves.second[i]));
-        }
-        if(moves.first.size() == moves.second.size()){
-            assert(ChessBoardState::Move(moves.first[moves.first.size()-1]));
-            assert(ChessBoardState::Move(moves.second[moves.first.size()-1]));
-        }
-        else{
-            assert(ChessBoardState::Move(moves.first[moves.first.size()-1]));
+    ChessBoardState::ChessBoardState(const std::vector<ChessMove> &moves) : is_end(0) {
+        ClearBoard();
+        for (auto &move: moves) {
+            assert(ChessBoardState::Move(move));
         }
     }
 
@@ -48,7 +38,7 @@ namespace gomoku {
         }
         board[x][y] = EMPTY;
         //判断局面是否结束
-        is_end=0;
+        is_end = 0;
         for (int i = 0; i < BOARD_SIZE; i++) {
             for (int j = 0; j < BOARD_SIZE; j++) {
                 if (board[i][j] != EMPTY) {
@@ -79,7 +69,7 @@ namespace gomoku {
     }
 
     bool ChessBoardState::ChessBoardInitialize(const std::vector<ChessMove> &moves) {
-        for (int i = 0; i < moves.size(); i++){
+        for (int i = 0; i < moves.size(); i++) {
             ChessBoardState::Move(moves[i]);
         }
         return true;
@@ -89,16 +79,16 @@ namespace gomoku {
         return is_end;
     }
 
-    bool ChessBoardState::IsEmpty(){
+    bool ChessBoardState::IsEmpty() {
         for (int i = 0; i < BOARD_SIZE; i++) {
             for (int j = 0; j < BOARD_SIZE; j++) {
-                if(board[i][j] != EMPTY)return false;
+                if (board[i][j] != EMPTY)return false;
             }
         }
         return true;
     }
 
-    void ChessBoardState::ClearBoard(){
+    void ChessBoardState::ClearBoard() {
         for (int i = 0; i < BOARD_SIZE; i++) {
             for (int j = 0; j < BOARD_SIZE; j++) {
                 board[i][j] = EMPTY;

@@ -6,50 +6,68 @@
 #include "Engine.h"
 #include "ChessBoardState.h"
 #include "glog/logging.h"
+#include "Evaluate.h"
 
 void EvaluateManualTest();
 
 void EngineManualTest();
 
-void BoardEvaluateTest(std::vector<gomoku::ChessMove> &black_moves, std::vector<gomoku::ChessMove> &white_moves);
+void BoardEvaluateTest(std::vector<std::pair<uint32_t, uint32_t>> &black_moves,
+                       std::vector<std::pair<uint32_t, uint32_t>> &white_moves);
+
 void ChessBoard_1();
+
 void ChessBoard_2();
+
 void ChessBoard_3();
+
 void ChessBoard_4();
+
 void ChessBoard_5();
+
 void ChessBoard_6();
+
 void ChessBoard_7();
+
+void ChessBoard_8();
+
+void ChessBoard_9();
+
+void ChessBoard_10();
 
 #include <iostream>
 #include <cmath>
 
 int main(int argc, char *argv[]) {
-    // Initialize Google’s logging library.
+    // Initialize Google鈥檚 logging library.
     google::InitGoogleLogging("gomoku");
     FLAGS_log_dir = ".";
     FLAGS_v = 2;
     EngineManualTest();
-    //EvaluateManualTest();
+//    EvaluateManualTest();
 
-//    ChessBoard_1();
-//    ChessBoard_2();
-//    ChessBoard_3();
-//    ChessBoard_4();
-//    ChessBoard_5();
-//    ChessBoard_6();
-//    ChessBoard_7();
-
+    ChessBoard_1();
+    ChessBoard_2();
+    ChessBoard_3();
+    ChessBoard_4();
+    ChessBoard_5();
+    ChessBoard_6();
+    ChessBoard_7();
+    ChessBoard_8();
+    ChessBoard_9();
+    ChessBoard_10();
 }
 
 void EngineManualTest() {
     gomoku::Engine engine;
+    engine.SetEvaluateFunction(&gomoku::Evalute::evaluate_3);
     gomoku::ChessBoardState board;
     bool is_black = true;
     while (!board.IsEnd()) {
         board.PrintOnTerminal();
-        std::cout << "当前局面评估分数为:" << engine.Evaluate(board) << std::endl;
+        std::cout << "The current situation evaluation score is:" << engine.Evaluate(board) << std::endl;
         if (is_black) {
-            std::cout << "请输入下一步棋的坐标:" << std::endl;
+            std::cout << "Please enter the coordinates of the next move:" << std::endl;
             int x, y;
             std::cin >> x >> y;
             LOG(INFO) << "user move x:" << x << "y:" << y;
@@ -80,57 +98,126 @@ void EvaluateManualTest() {
             is_black = !is_black;
         }
         board.PrintOnTerminal();
-        std::cout << "当前局面评估分数为:" << engine.Evaluate(board) << std::endl;
-        std::cout << "is_black:" << is_black << " 请输入下一步棋的坐标:" << std::endl;
+        std::cout << "The current situation evaluation score is:" << engine.Evaluate(board) << std::endl;
+        std::cout << "is_black:" << is_black << " Please enter the coordinates of the next move:" << std::endl;
     } while (std::cin >> x >> y);
 }
 
-void BoardEvaluateTest(std::vector<gomoku::ChessMove> &black_moves, std::vector<gomoku::ChessMove> &white_moves){
+void BoardEvaluateTest(std::vector<std::pair<uint32_t, uint32_t>> &black_moves,
+                       std::vector<std::pair<uint32_t, uint32_t>> &white_moves) {
     gomoku::Engine engine;
-    const std::pair<std::vector<gomoku::ChessMove>,std::vector<gomoku::ChessMove>> moves{black_moves, white_moves};
+    engine.SetEvaluateFunction(&gomoku::Evalute::evaluate_3);
+    std::vector<gomoku::ChessMove> moves;
+    for (auto &move: black_moves) {
+        moves.emplace_back(true, move.first, move.second);
+    }
+    for (auto &move: white_moves) {
+        moves.emplace_back(false, move.first, move.second);
+    }
     gomoku::ChessBoardState board(moves);
     board.PrintOnTerminal();
-    std::cout << "当前局面评估分数为:" << engine.Evaluate(board) << std::endl;
+    std::cout << "The current situation evaluation score is:" << engine.Evaluate(board) << std::endl;
 }
 
-void ChessBoard_1(){
-    std::vector<gomoku::ChessMove> black_moves = {{true,7,7},{true,7,8},{true,7,9}};
-    std::vector<gomoku::ChessMove> white_moves = {{false,0,2},{false,0,3},{false,0,4}};
+void ChessBoard_1() {
+    std::vector<std::pair<uint32_t, uint32_t>> black_moves = {{7, 7},
+                                                              {7, 8},
+                                                              {7, 9}};
+    std::vector<std::pair<uint32_t, uint32_t>> white_moves = {{0, 2},
+                                                              {0, 3},
+                                                              {0, 4}};
     BoardEvaluateTest(black_moves, white_moves);
 }
 
-void ChessBoard_2(){
-    std::vector<gomoku::ChessMove> black_moves = {{true,7,7},{true,7,8},{true,7,9}};
-    std::vector<gomoku::ChessMove> white_moves = {{false,6,7},{false,6,8},{false,6,9}};
+void ChessBoard_2() {
+    std::vector<std::pair<uint32_t, uint32_t>> black_moves = {{7, 7},
+                                                              {7, 8},
+                                                              {7, 9}};
+    std::vector<std::pair<uint32_t, uint32_t>> white_moves = {{6, 7},
+                                                              {6, 8},
+                                                              {6, 9}};
     BoardEvaluateTest(black_moves, white_moves);
 }
 
-void ChessBoard_3(){
-    std::vector<gomoku::ChessMove> black_moves = {{true,7,7},{true,7,6},{true,8,6},{true,9,5},{true,6,6}};
-    std::vector<gomoku::ChessMove> white_moves = {{false,6,7},{false,7,8},{false,8,7},{false,6,8},{false,9,6}};
+void ChessBoard_3() {
+    std::vector<std::pair<uint32_t, uint32_t>> black_moves = {{7, 7},
+                                                              {7, 6},
+                                                              {8, 6},
+                                                              {9, 5},
+                                                              {6, 6}};
+    std::vector<std::pair<uint32_t, uint32_t>> white_moves = {{6, 7},
+                                                              {7, 8},
+                                                              {8, 7},
+                                                              {6, 8},
+                                                              {9, 6}};
     BoardEvaluateTest(black_moves, white_moves);
 }
 
-void ChessBoard_4(){
-    std::vector<gomoku::ChessMove> black_moves = {{true,7,7},{true,7,6},{true,8,6},{true,9,5},{true,6,6}};
-    std::vector<gomoku::ChessMove> white_moves = {{false,9,8},{false,7,8},{false,8,7},{false,6,8},{false,9,6}};
+void ChessBoard_4() {
+    std::vector<std::pair<uint32_t, uint32_t>> black_moves = {{7, 7},
+                                                              {7, 6},
+                                                              {8, 6},
+                                                              {9, 5},
+                                                              {6, 6}};
+    std::vector<std::pair<uint32_t, uint32_t>> white_moves = {{9, 8},
+                                                              {7, 8},
+                                                              {8, 7},
+                                                              {6, 8},
+                                                              {9, 6}};
     BoardEvaluateTest(black_moves, white_moves);
 }
 
-void ChessBoard_5(){
-    std::vector<gomoku::ChessMove> black_moves = {{true,7,7},{true,7,8},{true,7,9}};
-    std::vector<gomoku::ChessMove> white_moves = {{false,0,2},{false,0,3}};
+void ChessBoard_5() {
+    std::vector<std::pair<uint32_t, uint32_t>> black_moves = {{7, 7},
+                                                              {7, 8},
+                                                              {7, 9}};
+    std::vector<std::pair<uint32_t, uint32_t>> white_moves = {{0, 2},
+                                                              {0, 3}};
     BoardEvaluateTest(black_moves, white_moves);
 }
 
-void ChessBoard_6(){
-    std::vector<gomoku::ChessMove> black_moves = {{true,7,7},{true,7,8},{true,7,9}};
-    std::vector<gomoku::ChessMove> white_moves = {{false,6,7},{false,6,8}};
+void ChessBoard_6() {
+    std::vector<std::pair<uint32_t, uint32_t>> black_moves = {{7, 7},
+                                                              {7, 8},
+                                                              {7, 9}};
+    std::vector<std::pair<uint32_t, uint32_t>> white_moves = {{6, 7},
+                                                              {6, 8}};
     BoardEvaluateTest(black_moves, white_moves);
 }
 
-void ChessBoard_7(){
-    std::vector<gomoku::ChessMove> black_moves = {{true,7,7},{true,7,8},{true,7,9},{true,7,10},{true,7,11}};
-    std::vector<gomoku::ChessMove> white_moves = {{false,6,7},{false,6,8},{false,6,9},{false,6,10}};
+void ChessBoard_7() {
+    std::vector<std::pair<uint32_t, uint32_t>> black_moves = {{7, 7},
+                                                              {7, 8},
+                                                              {7, 9},
+                                                              {7, 10},
+                                                              {7, 11}};
+    std::vector<std::pair<uint32_t, uint32_t>> white_moves = {};
+    BoardEvaluateTest(black_moves, white_moves
+    );
+}
+
+void ChessBoard_8() {
+    std::vector<std::pair<uint32_t, uint32_t>> black_moves = {{7, 7},
+                                                              {7, 8},
+                                                              {7, 9},
+                                                              {7, 10},
+    };
+    std::vector<std::pair<uint32_t, uint32_t>> white_moves = {{7, 11},
+                                                              {7, 6},
+                                                              {8, 8},
+                                                              {6, 8}};
+    BoardEvaluateTest(black_moves, white_moves);
+}
+
+void ChessBoard_9() {
+    std::vector<std::pair<uint32_t, uint32_t>> black_moves = {{7,7}};
+    std::vector<std::pair<uint32_t, uint32_t>> white_moves = {{2,3}};;
+    BoardEvaluateTest(black_moves, white_moves);
+}
+
+void ChessBoard_10() {
+    std::vector<std::pair<uint32_t, uint32_t>> black_moves = {{4, 3}};
+    std::vector<std::pair<uint32_t, uint32_t>> white_moves = {{3, 4},
+                                                              {2, 5}};
     BoardEvaluateTest(black_moves, white_moves);
 }

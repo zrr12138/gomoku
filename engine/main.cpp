@@ -35,6 +35,7 @@ void ChessBoard_9();
 
 void ChessBoard_10();
 
+void EngineTest_1();
 #include <iostream>
 #include <cmath>
 
@@ -43,19 +44,19 @@ int main(int argc, char *argv[]) {
     google::InitGoogleLogging("gomoku");
     FLAGS_log_dir = ".";
     FLAGS_v = 2;
-    EngineManualTest();
+    //EngineManualTest();
 //    EvaluateManualTest();
-
-    ChessBoard_1();
-    ChessBoard_2();
-    ChessBoard_3();
-    ChessBoard_4();
-    ChessBoard_5();
-    ChessBoard_6();
-    ChessBoard_7();
-    ChessBoard_8();
-    ChessBoard_9();
-    ChessBoard_10();
+    EngineTest_1();
+//    ChessBoard_1();
+//    ChessBoard_2();
+//    ChessBoard_3();
+//    ChessBoard_4();
+//    ChessBoard_5();
+//    ChessBoard_6();
+//    ChessBoard_7();
+//    ChessBoard_8();
+//    ChessBoard_9();
+//    ChessBoard_10();
 }
 
 void EngineManualTest() {
@@ -220,4 +221,22 @@ void ChessBoard_10() {
     std::vector<std::pair<uint32_t, uint32_t>> white_moves = {{3, 4},
                                                               {2, 5}};
     BoardEvaluateTest(black_moves, white_moves);
+}
+void EngineTest_1(){
+    gomoku::Engine engine;
+    engine.SetEvaluateFunction(&gomoku::Evalute::evaluate_3);
+    gomoku::ChessBoardState board;
+    board.Move(gomoku::ChessMove(true,7,7));
+    board.Move(gomoku::ChessMove(false,5,6));
+    board.Move(gomoku::ChessMove(true,6,6));
+    board.Move(gomoku::ChessMove(false,6,7));
+    board.Move(gomoku::ChessMove(true,5,5));
+    engine.StartSearch(board, false);
+    board.PrintOnTerminal();
+    std::this_thread::sleep_for(std::chrono::seconds(10));
+    auto move = engine.GetResult();
+    board.Move(move);
+    board.PrintOnTerminal();
+    std::cout << "engine move:" << move;
+    engine.Stop();
 }

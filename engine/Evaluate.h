@@ -5,8 +5,8 @@
 
 #ifndef GOMOKU_EVALUATE_H
 #define GOMOKU_EVALUATE_H
-#define BLACK_WIN INT64_MAX
-#define BLACK_LOSS INT64_MIN
+#define BLACK_WIN (1LL<<60)
+#define BLACK_LOSS -(BLACK_WIN)
 namespace gomoku {
     class Evalute{
     public:

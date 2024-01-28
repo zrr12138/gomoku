@@ -43,10 +43,7 @@ namespace gomoku {
 
         Chess GetChessAt(uint32_t x, uint32_t y) const;
 
-        bool ClearChessAt(uint32_t x, uint32_t y);
-
         bool Move(ChessMove move);
-        bool ChessBoardInitialize(const std::vector<ChessMove> &moves);
         /**
      * 判断游戏是否结束,O（1）复杂度
      * @return 0代表未结束，1代表黑棋获胜，0代表白棋获胜

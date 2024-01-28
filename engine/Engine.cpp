@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <cmath>
 #include "glog/logging.h"
+#include "common/timeutility.h"
 
 namespace gomoku {
 
@@ -76,11 +77,14 @@ namespace gomoku {
             ctx->depth_limit = depth;
             ctx->search_node = 0;
             ctx->leaf_node = 0;
+            ctx->start_search_timestamp_ms = common::TimeUtility::GetTimeofDayMs();
             LOG(INFO) << "start dfs with board:" << ctx->board.hash() << " depth_limit:" << ctx->depth_limit;
             auto res = DFS(ctx.get(), black_first, INT64_MAX, INT64_MIN);
             LOG(INFO) << "get result of dfs board: " << ctx->board.hash() << " depth_limit:" << ctx->depth_limit
                       << " move:" << res.first << " score:" << res.second << " search node:" << ctx->search_node
-                      << "leaf node:" << ctx->leaf_node;
+                      << " leaf node:" << ctx->leaf_node << " cost:"
+                      << common::TimeUtility::GetTimeofDayMs() - ctx->start_search_timestamp_ms << " ms"
+                      << " is interrupt: " << stop_.load();
             if (!stop_.load()) { //防止最后一次搜索是被打断的
                 std::unique_lock<std::mutex> guard(map_mutex_);
                 depth2res_[depth] = res;
@@ -138,7 +142,7 @@ namespace gomoku {
     }
 
     int64_t Engine::Evaluate(const ChessBoardState &board) {
-        assert(evaluate_!= nullptr);
+        assert(evaluate_ != nullptr);
         return evaluate_(board);
     }
 

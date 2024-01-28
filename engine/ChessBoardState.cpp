@@ -32,22 +32,22 @@ namespace gomoku {
         }
     }
 
-    bool ChessBoardState::ClearChessAt(uint32_t x, uint32_t y) {
-        if (board[x][y] == EMPTY) {
-            return false;
-        }
-        board[x][y] = EMPTY;
-        //判断局面是否结束
-        is_end = 0;
-        for (int i = 0; i < BOARD_SIZE; i++) {
-            for (int j = 0; j < BOARD_SIZE; j++) {
-                if (board[i][j] != EMPTY) {
-                    update_is_end_from(i, j);
-                }
-            }
-        }
-        return true;
-    }
+//    bool ChessBoardState::ClearChessAt(uint32_t x, uint32_t y) {
+//        if (board[x][y] == EMPTY) {
+//            return false;
+//        }
+//        board[x][y] = EMPTY;
+//        //判断局面是否结束
+//        is_end = 0;
+//        for (int i = 0; i < BOARD_SIZE; i++) {
+//            for (int j = 0; j < BOARD_SIZE; j++) {
+//                if (board[i][j] != EMPTY) {
+//                    update_is_end_from(i, j);
+//                }
+//            }
+//        }
+//        return true;
+//    }
 
     bool ChessBoardState::Move(ChessMove move) {
         assert(move.x < BOARD_SIZE);
@@ -57,23 +57,12 @@ namespace gomoku {
             LOG(ERROR) << "move failed, move: " << move;
             return false;
         }
-        if (is_end) {
-            this->PrintOnTerminal();
-            std::cout << move << std::endl;
-        }
         assert(is_end == 0);
-
         chess = move.is_black ? BLACK : WHITE;
         update_is_end_from(move.x, move.y);
         return true;
     }
 
-    bool ChessBoardState::ChessBoardInitialize(const std::vector<ChessMove> &moves) {
-        for (int i = 0; i < moves.size(); i++) {
-            ChessBoardState::Move(moves[i]);
-        }
-        return true;
-    }
 
     int ChessBoardState::IsEnd() const {
         return is_end;
@@ -94,6 +83,7 @@ namespace gomoku {
                 board[i][j] = EMPTY;
             }
         }
+        is_end = 0;
     }
 
     ChessBoardState::ChessBoardState() : is_end(0) {
@@ -109,8 +99,9 @@ namespace gomoku {
         if (board[move.x][move.y] != chess) {
             return false;
         }
-        if (!ClearChessAt(move.x, move.y)) {
-            return false;
+        board[move.x][move.y] = EMPTY;
+        if (is_end) {
+            is_end = 0;
         }
         return true;
     }
@@ -139,7 +130,8 @@ namespace gomoku {
             }
         }
         for (int i = 0; i < 8; i += 2) {
-            if (cnt[i] + cnt[i + 1] >= 4) {
+            assert(cnt[i] + cnt[i + 1] <= 4);
+            if (cnt[i] + cnt[i + 1] == 4) {
                 is_end = board[x][y] == BLACK ? 1 : -1;
 //                LOG(INFO) << __func__ << " board is_end:" << is_end << " x:" << x << " y:" << y << " i:" << i
 //                          << "board:" << *this;

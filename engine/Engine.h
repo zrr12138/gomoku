@@ -35,6 +35,7 @@ namespace gomoku {
             uint32_t depth_limit;
             uint64_t search_node;
             uint64_t leaf_node;
+            uint64_t start_search_timestamp_ms;
         };
         common::TaskThreadPool<> taskThreadPool;
         std::mutex map_mutex_;//保护下面两个数据结构

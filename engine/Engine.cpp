@@ -25,7 +25,15 @@ namespace gomoku {
         if (ctx->current_depth >= ctx->depth_limit || ctx->board.IsEnd() || stop_.load()) {
             ctx->leaf_node++;
             ChessMove _{};
-            return std::make_pair(_, evaluate_(ctx->board));
+            auto hash = ctx->board.hash();
+            if (board2score.find(hash) != board2score.end()) {
+                return std::make_pair(_, board2score[hash]);
+            } else {
+                auto score = evaluate_(ctx->board);
+                board2score.emplace(hash,score);
+                return std::make_pair(_, score);
+            }
+
         }
         std::vector<ChessMove> moves;
         ctx->board.GetMoves(is_max, &moves);
@@ -34,6 +42,9 @@ namespace gomoku {
         if (is_max) { result.second = INT64_MIN; }
         else { result.second = INT64_MAX; }
         for (auto &move: moves) {
+            if (IsCutMove(ctx, move)) {
+                continue;
+            }
             assert(ctx->board.Move(move));
             ctx->moves_.push_back(move);
             ctx->current_depth++;
@@ -133,7 +144,14 @@ namespace gomoku {
         return true;
     }
 
-    Engine::Engine() : evaluate_(nullptr) {
+    Engine::Engine() : evaluate_(nullptr), around({{1,  0},
+                                                   {-1, 0},
+                                                   {0,  1},
+                                                   {0,  -1},
+                                                   {1,  1},
+                                                   {-1, -1},
+                                                   {1,  -1},
+                                                   {-1, 1}}) {
 
     }
 
@@ -144,6 +162,25 @@ namespace gomoku {
     int64_t Engine::Evaluate(const ChessBoardState &board) {
         assert(evaluate_ != nullptr);
         return evaluate_(board);
+    }
+
+    bool Engine::IsCutMove(const Engine::SearchCtx *ctx, const ChessMove &move) const {
+        //如果当前点半径为2的范围内没有棋子，则直接剪掉
+        for (auto &pos: around) {
+            if (move.x + pos.first < BOARD_SIZE && move.y + pos.second < BOARD_SIZE &&
+                ctx->board.GetChessAt(move.x + pos.first, move.y + pos.second) != Chess::EMPTY) {
+                return false;
+            }
+            if (move.x + pos.first * 2 < BOARD_SIZE && move.y + pos.second * 2 < BOARD_SIZE &&
+                ctx->board.GetChessAt(move.x + pos.first * 2, move.y + pos.second * 2) != Chess::EMPTY) {
+                return false;
+            }
+        }
+        if (ctx->board.isInit()) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
 } // gomoku

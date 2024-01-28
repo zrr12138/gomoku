@@ -60,6 +60,9 @@ namespace gomoku {
          * @return <最佳走法,分值>
          */
         std::pair<ChessMove, int64_t> DFS(SearchCtx *ctx,bool is_max,int64_t upper_bound,int64_t lower_bound);
+        bool IsCutMove(const SearchCtx *ctx,const ChessMove &move) const;
+        std::vector<std::pair<uint32_t, uint32_t >> around;
+        std::map<uint64_t,int64_t> board2score;
     };
 
 } // gomoku

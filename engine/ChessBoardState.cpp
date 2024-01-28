@@ -25,7 +25,7 @@ namespace gomoku {
         return board[x][y];
     }
 
-    ChessBoardState::ChessBoardState(const std::vector<ChessMove> &moves) : is_end(0) {
+    ChessBoardState::ChessBoardState(const std::vector<ChessMove> &moves) : is_end(0),is_init(true) {
         ClearBoard();
         for (auto &move: moves) {
             assert(ChessBoardState::Move(move));
@@ -57,6 +57,7 @@ namespace gomoku {
             LOG(ERROR) << "move failed, move: " << move;
             return false;
         }
+        is_init= false;
         assert(is_end == 0);
         chess = move.is_black ? BLACK : WHITE;
         update_is_end_from(move.x, move.y);
@@ -84,9 +85,10 @@ namespace gomoku {
             }
         }
         is_end = 0;
+        is_init= true;
     }
 
-    ChessBoardState::ChessBoardState() : is_end(0) {
+    ChessBoardState::ChessBoardState() : is_end(0),is_init(true) {
         for (int i = 0; i < BOARD_SIZE; i++) {
             for (int j = 0; j < BOARD_SIZE; j++) {
                 board[i][j] = EMPTY;
@@ -208,6 +210,10 @@ namespace gomoku {
         }
         os << std::dec << std::endl;
         return os;
+    }
+
+    bool ChessBoardState::isInit() const {
+        return is_init;
     }
 
     ChessMove::ChessMove(bool isBlack, uint32_t x, uint32_t y) : is_black(isBlack), x(x), y(y) {

@@ -29,6 +29,13 @@ namespace gomoku {
     class ChessBoardState {
     private:
         int is_end;
+        bool is_init;
+    public:
+        bool isInit() const;
+
+        void setIsInit(bool isInit);
+
+    private:
         Chess board[BOARD_SIZE][BOARD_SIZE]{};
         void update_is_end_from(uint32_t x,uint32_t y); //以某个点为中心判断游戏是否结束。
     public:

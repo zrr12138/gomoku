@@ -44,9 +44,9 @@ int main(int argc, char *argv[]) {
     google::InitGoogleLogging("gomoku");
     FLAGS_log_dir = ".";
     FLAGS_v = 2;
-    //EngineManualTest();
-//    EvaluateManualTest();
-    EngineTest_1();
+    EngineManualTest();
+    //EvaluateManualTest();
+    //EngineTest_1();
 //    ChessBoard_1();
 //    ChessBoard_2();
 //    ChessBoard_3();
@@ -75,14 +75,14 @@ void EngineManualTest() {
             board.Move(gomoku::ChessMove(is_black, x, y));
 
         } else {
+            engine.Stop();
             if (!engine.StartSearch(board, false)) {
                 break;
             }
-            std::this_thread::sleep_for(std::chrono::seconds(10));
+            std::this_thread::sleep_for(std::chrono::seconds(3));
             auto move = engine.GetResult();
             board.Move(move);
             std::cout << "engine move:" << move;
-            engine.Stop();
         }
         is_black = !is_black;
     }

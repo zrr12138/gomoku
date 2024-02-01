@@ -216,6 +216,58 @@ namespace gomoku {
         return is_init;
     }
 
+    std::string ChessBoardState::ToString() const {
+        std::string str;
+
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                switch (board[i][j]) {
+                    case EMPTY:
+                        str.push_back('0');
+                        break;
+                    case WHITE:
+                        str.push_back('1');
+                        break;
+                    case BLACK:
+                        str.push_back('2');
+                }
+            }
+        }
+        std::cout << str << std::endl;
+        return str;
+    }
+
+    bool ChessBoardState::ParseFromString(const std::string &str) {
+        std::cout << "  ";
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            std::cout << i << " ";
+        }
+        std::cout << std::endl;
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            std::cout << i << " ";
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                char c;
+                switch (str[15*i+j]) {
+                    case '0':
+                        c = '*';
+                        board[i][j] = EMPTY;
+                        break;
+                    case '1':
+                        c = '0';
+                        board[i][j] = WHITE;
+                        break;
+                    case '2':
+                        c = 'X';
+                        board[i][j] = BLACK;
+                        break;
+                }
+                std::cout << c << " ";
+            }
+            std::cout << std::endl;
+        }
+        return true;
+    }
+
     ChessMove::ChessMove(bool isBlack, uint32_t x, uint32_t y) : is_black(isBlack), x(x), y(y) {
     }
 

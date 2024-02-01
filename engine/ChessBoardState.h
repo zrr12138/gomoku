@@ -65,6 +65,8 @@ namespace gomoku {
                             std::vector<std::pair<uint32_t, uint32_t>> *white_pos) const;
         void GetPositionMap(std::map<std::pair<uint32_t,uint32_t>,Chess> *pos2chess) const;
         void PrintOnTerminal();
+        std::string ToString() const;
+        bool ParseFromString(const std::string  &str);
     };
 
 }

@@ -44,11 +44,12 @@ int main(int argc, char *argv[]) {
     google::InitGoogleLogging("gomoku");
     FLAGS_log_dir = ".";
     FLAGS_v = 2;
-    EngineManualTest();
+//    EngineManualTest();
     //EvaluateManualTest();
     //EngineTest_1();
 //    ChessBoard_1();
-//    ChessBoard_2();
+
+    ChessBoard_2();
 //    ChessBoard_3();
 //    ChessBoard_4();
 //    ChessBoard_5();
@@ -118,6 +119,9 @@ void BoardEvaluateTest(std::vector<std::pair<uint32_t, uint32_t>> &black_moves,
     gomoku::ChessBoardState board(moves);
     board.PrintOnTerminal();
     std::cout << "The current situation evaluation score is:" << engine.Evaluate(board) << std::endl;
+    std::string str = board.ToString();
+    board.ParseFromString(str);
+    board.PrintOnTerminal();
 }
 
 void ChessBoard_1() {

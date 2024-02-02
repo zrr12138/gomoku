@@ -6,6 +6,7 @@
 #include "ChessBoardState.h"
 #include <iostream>
 #include "glog/logging.h"
+#include <random>
 
 namespace gomoku {
 
@@ -25,7 +26,7 @@ namespace gomoku {
         return board[x][y];
     }
 
-    ChessBoardState::ChessBoardState(const std::vector<ChessMove> &moves) : is_end(0),is_init(true) {
+    ChessBoardState::ChessBoardState(const std::vector<ChessMove> &moves) : is_end(0), is_init(true) {
         ClearBoard();
         for (auto &move: moves) {
             assert(ChessBoardState::Move(move));
@@ -57,7 +58,7 @@ namespace gomoku {
             LOG(ERROR) << "move failed, move: " << move;
             return false;
         }
-        is_init= false;
+        is_init = false;
         assert(is_end == 0);
         chess = move.is_black ? BLACK : WHITE;
         update_is_end_from(move.x, move.y);
@@ -85,10 +86,10 @@ namespace gomoku {
             }
         }
         is_end = 0;
-        is_init= true;
+        is_init = true;
     }
 
-    ChessBoardState::ChessBoardState() : is_end(0),is_init(true) {
+    ChessBoardState::ChessBoardState() : is_end(0), is_init(true) {
         for (int i = 0; i < BOARD_SIZE; i++) {
             for (int j = 0; j < BOARD_SIZE; j++) {
                 board[i][j] = EMPTY;
@@ -111,15 +112,16 @@ namespace gomoku {
     void ChessBoardState::update_is_end_from(uint32_t x, uint32_t y) {
         assert(board[x][y] != EMPTY);
 
-        std::vector<std::pair<int, int>> dir = {{1,  0},
-                                                {-1, 0},
-                                                {0,  1},
-                                                {0,  -1},
-                                                {1,  1},
-                                                {-1, -1},
-                                                {1,  -1},
-                                                {-1, 1}};
-        std::vector<uint32_t> cnt(8, 0);
+        static std::vector<std::pair<int, int>> dir = {{1,  0},
+                                                       {-1, 0},
+                                                       {0,  1},
+                                                       {0,  -1},
+                                                       {1,  1},
+                                                       {-1, -1},
+                                                       {1,  -1},
+                                                       {-1, 1}};
+        static int cnt[8];
+        memset(cnt, 0, sizeof(cnt));
         for (int k = 0; k < 8; k++) {
             int i = static_cast<int>(x), j = static_cast<int>(y);
             auto delta = dir[k];
@@ -129,25 +131,21 @@ namespace gomoku {
                 i += delta.first;
                 j += delta.second;
                 cnt[k]++;
-            }
-        }
-        for (int i = 0; i < 8; i += 2) {
-            assert(cnt[i] + cnt[i + 1] <= 4);
-            if (cnt[i] + cnt[i + 1] == 4) {
-                is_end = board[x][y] == BLACK ? 1 : -1;
-//                LOG(INFO) << __func__ << " board is_end:" << is_end << " x:" << x << " y:" << y << " i:" << i
-//                          << "board:" << *this;
-                break;
+                if (((k & 1) && cnt[k] + cnt[k - 1] >= 4) || cnt[k] >= 4) {
+                    is_end = board[x][y] == BLACK ? 1 : -1;
+                    return;
+                }
             }
         }
     }
 
     void ChessBoardState::GetMoves(bool is_black, std::vector<ChessMove> *moves) const {
         assert(is_end == 0);
+        moves->reserve(BOARD_SIZE * BOARD_SIZE);
         for (int i = 0; i < BOARD_SIZE; i++) {
             for (int j = 0; j < BOARD_SIZE; j++) {
                 if (board[i][j] == EMPTY) {
-                    moves->push_back(ChessMove(is_black, i, j));
+                    moves->emplace_back(is_black, i, j);
                 }
             }
         }
@@ -216,6 +214,46 @@ namespace gomoku {
         return is_init;
     }
 
+    ChessMove ChessBoardState::getRandMove(bool is_black) {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<uint32_t> dist(0, BOARD_SIZE - 1);
+        int try_num = BOARD_SIZE;
+        while (try_num--) {
+            uint32_t x = dist(gen);
+            uint32_t y = dist(gen);
+            if (GetChessAt(x, y) == Chess::EMPTY) {
+                return {is_black, x, y};
+            }
+        }
+        std::vector<ChessMove> moves;
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                if (GetChessAt(i, j) == Chess::EMPTY) {
+                    moves.emplace_back(is_black, i, j);
+                }
+            }
+        }
+        if (moves.empty()) {
+            return ChessMove();
+        }
+        std::uniform_int_distribution<uint32_t> dist2(0, moves.size() - 1);
+        return moves[dist2(gen)];
+    }
+
+    BoardResult ChessBoardState::End() const {
+        switch (is_end) {
+            case 0:
+                return BoardResult::NOT_END;
+            case 1:
+                return BoardResult::BLACK_WIN;
+            case -1:
+                return BoardResult::WHITE_WIN;
+            default:
+                assert(0);
+        }
+    }
+
     ChessMove::ChessMove(bool isBlack, uint32_t x, uint32_t y) : is_black(isBlack), x(x), y(y) {
     }
 
@@ -223,7 +261,13 @@ namespace gomoku {
     }
 
     std::ostream &operator<<(std::ostream &os, const ChessMove &move) {
-        os << "is_black: " << move.is_black << " x: " << move.x << " y: " << move.y;
+        os << " (" << move.x << "," << move.y << ",";
+        if (move.is_black) {
+            os << "b";
+        } else {
+            os << "w";
+        }
+        os << ") ";
         return os;
     }
 

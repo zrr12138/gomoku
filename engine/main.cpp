@@ -7,6 +7,7 @@
 #include "ChessBoardState.h"
 #include "glog/logging.h"
 #include "Evaluate.h"
+#include "MCTSEngine.h"
 
 void EvaluateManualTest();
 
@@ -36,6 +37,12 @@ void ChessBoard_9();
 void ChessBoard_10();
 
 void EngineTest_1();
+
+void EngineTest_2();
+
+void EngineTest_3();
+
+void EngineTest_4();
 #include <iostream>
 #include <cmath>
 
@@ -44,7 +51,7 @@ int main(int argc, char *argv[]) {
     google::InitGoogleLogging("gomoku");
     FLAGS_log_dir = ".";
     FLAGS_v = 2;
-    EngineManualTest();
+    //EngineManualTest();
     //EvaluateManualTest();
     //EngineTest_1();
 //    ChessBoard_1();
@@ -57,6 +64,8 @@ int main(int argc, char *argv[]) {
 //    ChessBoard_8();
 //    ChessBoard_9();
 //    ChessBoard_10();
+//    EngineTest_3();
+    EngineTest_4();
 }
 
 void EngineManualTest() {
@@ -231,6 +240,8 @@ void EngineTest_1(){
     board.Move(gomoku::ChessMove(true,6,6));
     board.Move(gomoku::ChessMove(false,6,7));
     board.Move(gomoku::ChessMove(true,5,5));
+    board.Move(gomoku::ChessMove(false,7,8));
+    board.Move(gomoku::ChessMove(true,8,8));
     engine.StartSearch(board, false);
     board.PrintOnTerminal();
     std::this_thread::sleep_for(std::chrono::seconds(10));
@@ -239,4 +250,60 @@ void EngineTest_1(){
     board.PrintOnTerminal();
     std::cout << "engine move:" << move;
     engine.Stop();
+}
+void EngineTest_2(){
+    gomoku::Engine engine;
+    engine.SetEvaluateFunction(&gomoku::Evalute::evaluate_3);
+    gomoku::ChessBoardState board;
+    board.Move(gomoku::ChessMove(true,7,7));
+    board.Move(gomoku::ChessMove(false,7,8));
+    board.Move(gomoku::ChessMove(true,6,7));
+    board.Move(gomoku::ChessMove(false,5,7));
+    board.Move(gomoku::ChessMove(true,5,8));
+    engine.StartSearch(board, false);
+    board.PrintOnTerminal();
+    std::this_thread::sleep_for(std::chrono::seconds(10));
+    auto move = engine.GetResult();
+    board.Move(move);
+    board.PrintOnTerminal();
+    std::cout << "engine move:" << move;
+    engine.Stop();
+}
+void EngineTest_3(){
+    gomoku::MCTSEngine engine;
+    gomoku::ChessBoardState board;
+    board.Move(gomoku::ChessMove(true,7,7));
+    board.Move(gomoku::ChessMove(false,7,8));
+    board.Move(gomoku::ChessMove(true,6,7));
+    board.Move(gomoku::ChessMove(false,5,7));
+    board.Move(gomoku::ChessMove(true,5,8));
+    engine.StartSearch(board, false);
+    board.PrintOnTerminal();
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    auto move = engine.GetResult();
+    board.Move(move);
+    board.PrintOnTerminal();
+    std::cout << "engine move:" << move;
+    engine.Stop();
+    engine.DumpTree();
+}
+void EngineTest_4(){
+    gomoku::MCTSEngine engine;
+    gomoku::ChessBoardState board;
+    board.Move(gomoku::ChessMove(true,7,7));
+    board.Move(gomoku::ChessMove(false,6,7));
+    board.Move(gomoku::ChessMove(true,7,8));
+    board.Move(gomoku::ChessMove(false,6,8));
+    board.Move(gomoku::ChessMove(true,7,9));
+    board.Move(gomoku::ChessMove(false,7,10));
+    board.Move(gomoku::ChessMove(true,7,6));
+    engine.StartSearch(board, false);
+    board.PrintOnTerminal();
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    auto move = engine.GetResult();
+    board.Move(move);
+    board.PrintOnTerminal();
+    std::cout << "engine move:" << move;
+    engine.Stop();
+    engine.DumpTree();
 }

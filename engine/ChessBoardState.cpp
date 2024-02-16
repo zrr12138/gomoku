@@ -120,7 +120,7 @@ namespace gomoku {
                                                        {-1, -1},
                                                        {1,  -1},
                                                        {-1, 1}};
-        static int cnt[8];
+        thread_local int cnt[8];
         memset(cnt, 0, sizeof(cnt));
         for (int k = 0; k < 8; k++) {
             int i = static_cast<int>(x), j = static_cast<int>(y);

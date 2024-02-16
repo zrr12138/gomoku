@@ -8,7 +8,7 @@
 #include "glog/logging.h"
 #include "Evaluate.h"
 #include "MCTSEngine.h"
-
+#include <cmath>
 void EvaluateManualTest();
 
 void EngineManualTest();
@@ -43,8 +43,7 @@ void EngineTest_2();
 void EngineTest_3();
 
 void EngineTest_4();
-#include <iostream>
-#include <cmath>
+
 
 int main(int argc, char *argv[]) {
     // Initialize Google’s logging library.
@@ -299,7 +298,7 @@ void EngineTest_4(){
     board.Move(gomoku::ChessMove(true,7,6));
     engine.StartSearch(board, false);
     board.PrintOnTerminal();
-    std::this_thread::sleep_for(std::chrono::seconds(2));
+    std::this_thread::sleep_for(std::chrono::seconds(10));
     auto move = engine.GetResult();
     board.Move(move);
     board.PrintOnTerminal();

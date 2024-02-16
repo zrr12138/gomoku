@@ -9,6 +9,7 @@
 #include "glog/logging.h"
 #include "common/timeutility.h"
 #include "common/defer.h"
+#include "common/rw_lock.h"
 #include <cmath>
 #include <chrono>
 #include <thread>
@@ -28,9 +29,9 @@ namespace gomoku {
         //初始化根节点x
         root_n = 0;
         root_black = black_first;
-        root_node_ = std::make_unique<Node>(black_first, this);
+        root_node_ = std::make_shared<Node>(black_first, this);
         root_board_ = state;
-        threadPool.Init(1, std::bind(&MCTSEngine::LoopExpandTree, this));
+        threadPool.Init(20, std::bind(&MCTSEngine::LoopExpandTree, this));
         threadPool.Start();
         return true;
     }
@@ -40,6 +41,7 @@ namespace gomoku {
         SearchCtx ctx;
         ctx.board = root_board_;
         while (!stop_.load()) {
+            // LOG(INFO) << "start expand tree whit ctx addr:" << &ctx << " ctx.board.hash:" << ctx.board.hash();
             root_node_->ExpandTree(&ctx);
             root_n++;
         }
@@ -59,9 +61,7 @@ namespace gomoku {
     }
 
     ChessMove MCTSEngine::GetResult() {
-        while (!root_node_->all_expanded.load()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
+        common::ReadLockGuard r_guard(root_node_->moves_lock);
         auto extremum = root_node_->moves.begin()->second->GetWinRate(root_black);
         auto it = root_node_->moves.begin();
         ChessMove move = it->first;
@@ -88,7 +88,7 @@ namespace gomoku {
             os << "\t";
         }
         os << move;
-        os << " bv:" << node->GetValue(true) << " wv:" << node->GetValue(false) << " b_win rate:"
+        os << " value:" << node->GetValue() << " b_win rate:"
            << node->GetWinRate(true) << " w_win rate:" << node->GetWinRate(false) << " bwc:" << node->black_win_count
            << " wwc" << node->white_win_count << " n:" << node->n;
         for (auto &mv: node->moves) {
@@ -97,12 +97,11 @@ namespace gomoku {
     }
 
     Node::Node(bool isBlack, MCTSEngine *engine) : is_black(isBlack), n(0), black_win_count(0), white_win_count(0),
-                                                   engine_(engine), all_expanded(false) {
+                                                   engine_(engine), access_cnt(0), unexpanded_nodes_inited(false) {
 
     }
 
     void Node::UpdateValue(BoardResult res) {
-        std::unique_lock<std::mutex> guard(value_mutex_);
         n++;
         if (res == BoardResult::BLACK_WIN) {
             black_win_count++;
@@ -111,67 +110,67 @@ namespace gomoku {
         }
     }
 
+    void Node::InitUnexpandedNode(SearchCtx *ctx) {
+        if (!unexpanded_nodes_inited) {
+            std::unique_lock<std::mutex> guard(unexpanded_nodes_lock);
+            if (!unexpanded_nodes_inited) {
+                ctx->board.GetMoves(is_black, &unexpanded_nodes);
+                unexpanded_nodes_inited = true;
+            }
+        }
+    }
+
 
     BoardResult Node::ExpandTree(SearchCtx *ctx) {
         if (ctx->board.End() != BoardResult::NOT_END) {
             return ctx->board.End();
         }
-        if (all_expanded.load()) {
-            std::unique_lock<std::mutex> guard(struct_mutex_);
-            //TODO(zrr12138) read lock
-            auto it1 = moves.begin();
-            auto it2 = it1;
-            it2++;
-            assert(it1->second);
-            assert(it2->second);
-            auto val1 = it1->second->GetValue(is_black);
-            auto val2 = it2->second->GetValue(is_black);
-            if (val1 < val2) {
-                auto temp = std::move(*it1);
-                moves.erase(it1);
-                bool inserted = false;
-                auto it = moves.begin();
-                it++; // element2 is judged
-                for (; it != moves.end(); it++) {
-                    auto val = it->second->GetValue(is_black);
-                    if (val < val1) {
-                        it--;
-                        moves.insert(it, std::move(temp));
-                        inserted = true;
-                        break;
-                    }
+        InitUnexpandedNode(ctx);
+        int64_t index = access_cnt.fetch_add(1);
+        if (index >= unexpanded_nodes.size()) {
+            if (index % 64 == 0) {
+                //for performance
+                std::pair<ChessMove, std::shared_ptr<Node>> move;
+                {
+                    common::ReadLockGuard r_guard(moves_lock);
+                    assert(!moves.empty());
+                    move = *std::max_element(moves.begin(), moves.end(),
+                                             [](const std::pair<ChessMove, std::shared_ptr<Node>> &x,
+                                                const std::pair<ChessMove, std::shared_ptr<Node>> &y) -> bool {
+                                                 return x.second->GetValue() < y.second->GetValue();
+                                             });
                 }
-                if (!inserted) {
-                    moves.emplace_back(std::move(temp));
+                {
+                    common::WriteLockGuard w_gurad(best_move_lock_);
+                    best_move_ = move;
                 }
             }
-            guard.unlock();
-            auto move = moves.begin();
-            ctx->board.Move(move->first);
-            auto res = move->second->ExpandTree(ctx);
-            ctx->board.WithdrawMove(move->first);
+            std::pair<ChessMove, std::shared_ptr<Node>> best_move;
+            {
+                common::ReadLockGuard r_guard(best_move_lock_);
+                assert(best_move_.second != nullptr);
+                best_move = best_move_;
+            }
+            ctx->board.Move(best_move.first);
+            auto res = best_move.second->ExpandTree(ctx);
+            ctx->board.WithdrawMove(best_move.first);
             UpdateValue(res);
             return res;
         } else {
-            std::unique_lock<std::mutex> guard(struct_mutex_);
-            if (unexpanded_nodes.empty()) {
-                ctx->board.GetMoves(is_black, &unexpanded_nodes);
+            assert(index < unexpanded_nodes.size());
+            auto move = std::make_pair(unexpanded_nodes[index], std::make_shared<Node>(!is_black, engine_));
+            if (index == 0) {
+                common::WriteLockGuard w_gurad(best_move_lock_);
+                best_move_ = move;
             }
-            moves.emplace_back(unexpanded_nodes.back(), std::make_unique<Node>(!is_black, engine_));
-            unexpanded_nodes.pop_back();
-            auto move = moves.rbegin();
-            ctx->board.Move(move->first);
-            auto res = move->second->Simulation(ctx);
-            ctx->board.WithdrawMove(move->first);
+            {
+                common::WriteLockGuard w_gurad(moves_lock);
+                moves.emplace_back(move);
+            }
+            ctx->board.Move(move.first);
+            auto res = move.second->Simulation(ctx);
+            ctx->board.WithdrawMove(move.first);
             UpdateValue(res);
-            if (unexpanded_nodes.empty()) {
-                all_expanded.store(true);
-                auto is_black_ = is_black;
-                moves.sort([&is_black_](const std::pair<ChessMove, std::unique_ptr<Node>> &x,
-                                        const std::pair<ChessMove, std::unique_ptr<Node>> &y) -> bool {
-                    return x.second->GetValue(is_black_) > y.second->GetValue(is_black_);
-                });
-            }
             return res;
         }
     }
@@ -208,28 +207,26 @@ namespace gomoku {
         return end;
     }
 
-    double Node::GetValue(bool black_value) {
+    double Node::GetValue() {
         double dw, dn, total_n;
         {
-            std::unique_lock<std::mutex> guard(value_mutex_);
-            assert(n != 0);
-            if (black_value) {
+            if (!is_black) {
                 dw = static_cast<double >(black_win_count);
             } else {
                 dw = static_cast<double >(white_win_count);
             }
             dn = static_cast<double >(n);
+            if (dn == 0) {
+                return 0;
+            }
         }
         total_n = static_cast<double >(engine_->root_n);
-        auto engine = engine_;
-        double res = dw / dn + engine->C * std::sqrt(std::log(total_n) / dn);
-        return res;
+        return dw / dn + engine_->C * std::sqrt(std::log(total_n) / dn);
     }
 
     double Node::GetWinRate(bool black_rate) {
         double dw, dn;
         {
-            std::unique_lock<std::mutex> guard(value_mutex_);
             assert(n != 0);
             if (black_rate) {
                 dw = static_cast<double >(black_win_count);

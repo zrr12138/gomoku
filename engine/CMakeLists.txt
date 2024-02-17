@@ -21,6 +21,7 @@ set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O2")
+find_package(Tcmalloc REQUIRED)
 # 生成可执行文件
 add_executable(${PROJECT_NAME} ${SOURCES})
 
@@ -28,6 +29,7 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 target_link_libraries(${PROJECT_NAME}
         common_lib
         glog::glog
+        Tcmalloc::tcmalloc
         )
 
 

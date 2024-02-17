@@ -43,7 +43,7 @@ namespace gomoku {
         while (!stop_.load()) {
             // LOG(INFO) << "start expand tree whit ctx addr:" << &ctx << " ctx.board.hash:" << ctx.board.hash();
             root_node_->ExpandTree(&ctx);
-            root_n++;
+            root_n.fetch_add(1,std::memory_order_relaxed);
         }
     }
 
@@ -102,11 +102,11 @@ namespace gomoku {
     }
 
     void Node::UpdateValue(BoardResult res) {
-        n++;
+        n.fetch_add(1,std::memory_order_relaxed);
         if (res == BoardResult::BLACK_WIN) {
-            black_win_count++;
+            black_win_count.fetch_add(1,std::memory_order_relaxed);
         } else if (res == BoardResult::WHITE_WIN) {
-            white_win_count++;
+            white_win_count.fetch_add(1,std::memory_order_relaxed);
         }
     }
 
@@ -211,16 +211,16 @@ namespace gomoku {
         double dw, dn, total_n;
         {
             if (!is_black) {
-                dw = static_cast<double >(black_win_count);
+                dw = static_cast<double >(black_win_count.load(std::memory_order_relaxed));
             } else {
-                dw = static_cast<double >(white_win_count);
+                dw = static_cast<double >(white_win_count.load(std::memory_order_relaxed));
             }
-            dn = static_cast<double >(n);
+            dn = static_cast<double >(n.load(std::memory_order_relaxed));
             if (dn == 0) {
                 return 0;
             }
         }
-        total_n = static_cast<double >(engine_->root_n);
+        total_n = static_cast<double >(engine_->root_n.load(std::memory_order_relaxed));
         return dw / dn + engine_->C * std::sqrt(std::log(total_n) / dn);
     }
 

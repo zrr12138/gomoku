@@ -20,7 +20,7 @@ set(CMAKE_BUILD_TYPE Debug)
 # 设置调试相关的编译选项
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
-
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O2")
 # 生成可执行文件
 add_executable(${PROJECT_NAME} ${SOURCES})
 

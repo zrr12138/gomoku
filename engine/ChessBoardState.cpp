@@ -7,6 +7,7 @@
 #include <iostream>
 #include "glog/logging.h"
 #include <random>
+#include "common/timeutility.h"
 
 namespace gomoku {
 
@@ -51,6 +52,7 @@ namespace gomoku {
 //    }
 
     bool ChessBoardState::Move(ChessMove move) {
+        auto start = common::TimeUtility::GetTimeofDayUs();
         assert(move.x < BOARD_SIZE);
         assert(move.y < BOARD_SIZE);
         auto &chess = board[move.x][move.y];
@@ -62,6 +64,7 @@ namespace gomoku {
         assert(is_end == 0);
         chess = move.is_black ? BLACK : WHITE;
         update_is_end_from(move.x, move.y);
+        LOG(INFO) << __func__ << " cost " << common::TimeUtility::GetTimeofDayUs() - start << " us";
         return true;
     }
 

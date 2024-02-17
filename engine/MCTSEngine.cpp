@@ -42,7 +42,9 @@ namespace gomoku {
         ctx.board = root_board_;
         while (!stop_.load()) {
             // LOG(INFO) << "start expand tree whit ctx addr:" << &ctx << " ctx.board.hash:" << ctx.board.hash();
+            auto start = common::TimeUtility::GetTimeofDayUs();
             root_node_->ExpandTree(&ctx);
+            LOG(INFO) << __func__ << "expand tree cost" << common::TimeUtility::GetTimeofDayUs() - start << " us";
             root_n++;
         }
     }
@@ -102,15 +104,18 @@ namespace gomoku {
     }
 
     void Node::UpdateValue(BoardResult res) {
+        auto start = common::TimeUtility::GetTimeofDayUs();
         n++;
         if (res == BoardResult::BLACK_WIN) {
             black_win_count++;
         } else if (res == BoardResult::WHITE_WIN) {
             white_win_count++;
         }
+        LOG(INFO) << __func__ << " cost " << common::TimeUtility::GetTimeofDayUs() - start << " us";
     }
 
     void Node::InitUnexpandedNode(SearchCtx *ctx) {
+        auto start = common::TimeUtility::GetTimeofDayUs();
         if (!unexpanded_nodes_inited) {
             std::unique_lock<std::mutex> guard(unexpanded_nodes_lock);
             if (!unexpanded_nodes_inited) {
@@ -118,6 +123,7 @@ namespace gomoku {
                 unexpanded_nodes_inited = true;
             }
         }
+        LOG(INFO) << __func__ << " cost " << common::TimeUtility::GetTimeofDayUs() - start << " us";
     }
 
 
@@ -127,9 +133,11 @@ namespace gomoku {
         }
         InitUnexpandedNode(ctx);
         int64_t index = access_cnt.fetch_add(1);
+        LOG(INFO) << "get index:" << index << " unexpanded_nodes.size():" << unexpanded_nodes.size();
         if (index >= unexpanded_nodes.size()) {
             if (index % 64 == 0) {
                 //for performance
+                auto start = common::TimeUtility::GetTimeofDayUs();
                 std::pair<ChessMove, std::shared_ptr<Node>> move;
                 {
                     common::ReadLockGuard r_guard(moves_lock);
@@ -144,19 +152,25 @@ namespace gomoku {
                     common::WriteLockGuard w_gurad(best_move_lock_);
                     best_move_ = move;
                 }
+                LOG(INFO) << "update best move cost " << common::TimeUtility::GetTimeofDayUs() - start << " us";
             }
+            auto start = common::TimeUtility::GetTimeofDayUs();
             std::pair<ChessMove, std::shared_ptr<Node>> best_move;
             {
                 common::ReadLockGuard r_guard(best_move_lock_);
                 assert(best_move_.second != nullptr);
                 best_move = best_move_;
             }
+            LOG(INFO) << "read best move cost " << common::TimeUtility::GetTimeofDayUs() - start << " us"
+                      << " best move:" << best_move.first;
+
             ctx->board.Move(best_move.first);
             auto res = best_move.second->ExpandTree(ctx);
             ctx->board.WithdrawMove(best_move.first);
             UpdateValue(res);
             return res;
         } else {
+            auto start = common::TimeUtility::GetTimeofDayUs();
             assert(index < unexpanded_nodes.size());
             auto move = std::make_pair(unexpanded_nodes[index], std::make_shared<Node>(!is_black, engine_));
             if (index == 0) {
@@ -167,6 +181,8 @@ namespace gomoku {
                 common::WriteLockGuard w_gurad(moves_lock);
                 moves.emplace_back(move);
             }
+            LOG(INFO) << "new move and update moves list cost " << common::TimeUtility::GetTimeofDayUs() - start << " us"
+                      << " move:" << move.first;
             ctx->board.Move(move.first);
             auto res = move.second->Simulation(ctx);
             ctx->board.WithdrawMove(move.first);
@@ -176,6 +192,7 @@ namespace gomoku {
     }
 
     BoardResult Node::Simulation(SearchCtx *ctx) {
+        auto start = common::TimeUtility::GetTimeofDayUs();
         thread_local uint32_t coords[BOARD_SIZE * BOARD_SIZE];
         thread_local bool coords_inited = false;
         thread_local std::random_device rd;  // 随机数种子
@@ -203,11 +220,13 @@ namespace gomoku {
             index++;
         }
         BoardResult end = board.End();
+        LOG(INFO) << __func__ << " cost " << common::TimeUtility::GetTimeofDayUs() - start << " us";
         UpdateValue(end);
         return end;
     }
 
     double Node::GetValue() {
+        auto start = common::TimeUtility::GetTimeofDayUs();
         double dw, dn, total_n;
         {
             if (!is_black) {
@@ -221,7 +240,10 @@ namespace gomoku {
             }
         }
         total_n = static_cast<double >(engine_->root_n);
-        return dw / dn + engine_->C * std::sqrt(std::log(total_n) / dn);
+        double value = dw / dn + engine_->C * std::sqrt(std::log(total_n) / dn);
+        LOG(INFO) << __func__ << " cost " << common::TimeUtility::GetTimeofDayUs() - start << " us" << " value:"
+                  << value;
+        return value;
     }
 
     double Node::GetWinRate(bool black_rate) {

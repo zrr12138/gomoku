@@ -128,7 +128,7 @@ namespace gomoku {
         InitUnexpandedNode(ctx);
         int64_t index = access_cnt.fetch_add(1);
         if (index >= unexpanded_nodes.size()) {
-            if (index % 128 == 0) {
+            if (index % 64 == 0) {
                 //for performance
                 std::pair<ChessMove, std::shared_ptr<Node>> move;
                 {

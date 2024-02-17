@@ -28,6 +28,7 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 target_link_libraries(${PROJECT_NAME}
         common_lib
         glog::glog
+        tcmalloc
         )
 
 

@@ -31,7 +31,7 @@ namespace gomoku {
         root_black = black_first;
         root_node_ = std::make_shared<Node>(black_first, this);
         root_board_ = state;
-        threadPool.Init(40, std::bind(&MCTSEngine::LoopExpandTree, this));
+        threadPool.Init(20, std::bind(&MCTSEngine::LoopExpandTree, this));
         threadPool.Start();
         return true;
     }

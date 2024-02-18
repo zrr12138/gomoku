@@ -33,5 +33,5 @@ target_link_libraries(${PROJECT_NAME}
 
 # 设置输出目录
 set_target_properties(${PROJECT_NAME} PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
         )

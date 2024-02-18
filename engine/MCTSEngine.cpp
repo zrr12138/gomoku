@@ -157,6 +157,7 @@ namespace gomoku {
         } else {
             while (index >= moves_size);
             auto move = moves[index];
+            assert(move.x != UINT32_MAX);
             auto node = std::make_shared<Node>(!is_black, engine_);
             sub_nodes[index] = node;
             if (index == 1) {

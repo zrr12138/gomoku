@@ -144,7 +144,7 @@ namespace gomoku {
                                                    }) - sub_nodes;
             }
             auto move_index = best_move_index.load();
-            assert(move_index > 0);
+            assert(move_index >= 0);
             auto move = moves[move_index];
             auto node = sub_nodes[move_index];
             ctx->board.Move(move);

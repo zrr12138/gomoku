@@ -19,19 +19,19 @@ namespace gomoku {
 
     struct Node {
         Node(bool isBlack, MCTSEngine *engine);
-
+        ~Node();
         std::atomic<int64_t> n, black_win_count, white_win_count;
 
-        std::vector<ChessMove> unexpanded_nodes;
-        std::mutex unexpanded_nodes_lock;
-        std::atomic<bool> unexpanded_nodes_inited;
         std::atomic<int64_t> access_cnt;
+        std::atomic<bool> inited;
+        ChessMove *unexpanded_moves;
+        int unexpanded_move_size;
 
-        std::list<std::pair<ChessMove, std::shared_ptr<Node>>> moves;
-        common::RWLock moves_lock;
-
-        std::pair<ChessMove, std::shared_ptr<Node>> best_move_;
+        std::list<std::pair<ChessMove, std::shared_ptr<Node>>> move2node_;
+        common::RWLock move2node_lock_;
+        std::pair<ChessMove, std::shared_ptr<Node>> best_move_node_;
         common::RWLock best_move_lock_;
+
         bool is_black;
         MCTSEngine *engine_;
 
@@ -43,7 +43,8 @@ namespace gomoku {
 
         BoardResult ExpandTree(SearchCtx *ctx);//需要确保最后能还原ctx中的内容用于下一次搜索
         BoardResult Simulation(SearchCtx *ctx); //黑棋赢则返回1否则返回0
-        inline void InitUnexpandedNode(SearchCtx *ctx);
+        BoardResult Simulation2(SearchCtx *ctx);
+        void Init(const ChessBoardState &borad);
     };
 
     struct SearchCtx {
@@ -54,7 +55,7 @@ namespace gomoku {
     class MCTSEngine {
         friend Node;
     public:
-        explicit MCTSEngine(double explore_c = std::sqrt(2));
+        explicit MCTSEngine(int thread_num, double explore_c = std::sqrt(2));
 
         bool StartSearch(const ChessBoardState &state, bool black_first);
 
@@ -65,14 +66,17 @@ namespace gomoku {
 
         void DumpTree();
 
+        int64_t GetRootN();
+
     private:
         std::atomic<int64_t> root_n;
         const double C;
         std::atomic<bool> stop_;
         common::ThreadPool threadPool;
+        common::RWLock root_lock_;
         std::shared_ptr<Node> root_node_;
-        bool root_black;
-        ChessBoardState root_board_;
+        std::shared_ptr<ChessBoardState> root_board_;
+        int thread_num_;
 
         void LoopExpandTree();
 

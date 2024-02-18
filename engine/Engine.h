@@ -22,7 +22,7 @@ namespace gomoku {
     public:
         Engine();
         bool StartSearch(const ChessBoardState &state, bool black_first);//非阻塞,指定先手和局面开始搜索，中断上一次的搜索
-        // json GetSearchTree(uint32_t depth); //指定深度打印搜索树信息
+        // json GetSearchTree(int depth); //指定深度打印搜索树信息
         ChessMove GetResult(); //获取搜索结果,该函数不应该中断搜索，可以反复调用获取最新的搜索结果
 //        uint64_t GetSearchDepth();
         bool Stop();
@@ -32,8 +32,8 @@ namespace gomoku {
         struct SearchCtx{
             ChessBoardState board;
             std::vector<ChessMove> moves_;
-            uint32_t current_depth;
-            uint32_t depth_limit;
+            int current_depth;
+            int depth_limit;
             uint64_t search_node;
             uint64_t leaf_node;
             uint64_t start_search_timestamp_ms;
@@ -41,7 +41,7 @@ namespace gomoku {
             uint64_t hit_searched_sub_node_cnt_;
         };
         struct SearchReturnCtx{
-           uint32_t search_depth_;
+           int search_depth_;
            int64_t score_;
            ChessMove move_;
             SearchReturnCtx()=default;
@@ -73,7 +73,7 @@ namespace gomoku {
          */
         SearchReturnCtx DFS(SearchCtx *ctx,bool is_max,int64_t upper_bound,int64_t lower_bound);
         bool IsCutMove(const SearchCtx *ctx,const ChessMove &move) const;
-        std::vector<std::pair<uint32_t, uint32_t >> around;
+        std::vector<std::pair<int, int >> around;
         std::map<uint64_t,int64_t> board2score;
     };
 

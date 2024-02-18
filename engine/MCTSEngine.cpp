@@ -24,7 +24,8 @@ namespace gomoku {
     }
 
     bool MCTSEngine::StartSearch(const ChessBoardState &state, bool black_first) {
-        assert(thread_num_ > 512);
+        std::cout << "thread_num_: " << thread_num_ << std::endl;
+        assert(thread_num_ < 512);
         stop_.store(false);
         LOG(INFO) << __func__ << " board: " << state.hash() << " black_first: " << black_first;
         //初始化根节点x

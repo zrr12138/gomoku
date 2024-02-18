@@ -62,6 +62,7 @@ namespace gomoku {
         assert(is_end == 0);
         chess = move.is_black ? BLACK : WHITE;
         update_is_end_from(move.x, move.y);
+        move_num++;
         return true;
     }
 
@@ -87,9 +88,10 @@ namespace gomoku {
         }
         is_end = 0;
         is_init = true;
+        move_num = 0;
     }
 
-    ChessBoardState::ChessBoardState() : is_end(0), is_init(true) {
+    ChessBoardState::ChessBoardState() : is_end(0), is_init(true), move_num(0) {
         for (int i = 0; i < BOARD_SIZE; i++) {
             for (int j = 0; j < BOARD_SIZE; j++) {
                 board[i][j] = EMPTY;
@@ -106,6 +108,7 @@ namespace gomoku {
         if (is_end) {
             is_end = 0;
         }
+        move_num--;
         return true;
     }
 
@@ -252,6 +255,10 @@ namespace gomoku {
             default:
                 assert(0);
         }
+    }
+
+    int ChessBoardState::GetMoveNums() {
+        return move_num;
     }
 
     ChessMove::ChessMove(bool isBlack, uint32_t x, uint32_t y) : is_black(isBlack), x(x), y(y) {

@@ -17,7 +17,7 @@ enum BoardResult {
     BLACK_WIN = 0,
     WHITE_WIN = 1,
     BALANCE = 2,
-    NOT_END=3,
+    NOT_END = 3,
 };
 namespace gomoku {
     const uint32_t BOARD_SIZE = 15;
@@ -38,6 +38,7 @@ namespace gomoku {
     private:
         int is_end;
         bool is_init;
+        int move_num;
     public:
         bool isInit() const;
 
@@ -61,6 +62,8 @@ namespace gomoku {
         Chess GetChessAt(uint32_t x, uint32_t y) const;
 
         bool Move(ChessMove move);
+
+        int GetMoveNums();
 
         /**
      * 判断游戏是否结束,O（1）复杂度

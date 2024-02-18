@@ -269,7 +269,7 @@ void EngineTest_2(){
     engine.Stop();
 }
 void EngineTest_3(){
-    gomoku::MCTSEngine engine;
+    gomoku::MCTSEngine engine(1);
     gomoku::ChessBoardState board;
     board.Move(gomoku::ChessMove(true,7,7));
     board.Move(gomoku::ChessMove(false,7,8));
@@ -287,7 +287,7 @@ void EngineTest_3(){
     engine.DumpTree();
 }
 void EngineTest_4(){
-    gomoku::MCTSEngine engine;
+    gomoku::MCTSEngine engine(1);
     gomoku::ChessBoardState board;
     board.Move(gomoku::ChessMove(true,7,7));
     board.Move(gomoku::ChessMove(false,6,7));

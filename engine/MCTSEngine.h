@@ -22,16 +22,14 @@ namespace gomoku {
 
         std::atomic<int64_t> n, black_win_count, white_win_count;
 
-        std::vector<ChessMove> unexpanded_nodes;
-        std::mutex unexpanded_nodes_lock;
-        std::atomic<bool> unexpanded_nodes_inited;
         std::atomic<int64_t> access_cnt;
 
-        std::list<std::pair<ChessMove, std::shared_ptr<Node>>> moves;
-        common::RWLock moves_lock;
+        ChessMove moves[BOARD_SIZE*BOARD_SIZE];
+        std::shared_ptr<Node> sub_nodes[BOARD_SIZE*BOARD_SIZE];
 
-        std::pair<ChessMove, std::shared_ptr<Node>> best_move_;
-        common::RWLock best_move_lock_;
+        std::atomic<int64_t> moves_size;
+        std::atomic<int64_t> best_move_index;
+
         bool is_black;
         MCTSEngine *engine_;
 
@@ -43,7 +41,7 @@ namespace gomoku {
 
         BoardResult ExpandTree(SearchCtx *ctx);//需要确保最后能还原ctx中的内容用于下一次搜索
         BoardResult Simulation(SearchCtx *ctx); //黑棋赢则返回1否则返回0
-        inline void InitUnexpandedNode(SearchCtx *ctx);
+        inline void InitUnexpandedNode(const ChessBoardState &board);
     };
 
     struct SearchCtx {
@@ -54,7 +52,7 @@ namespace gomoku {
     class MCTSEngine {
         friend Node;
     public:
-        explicit MCTSEngine(double explore_c = std::sqrt(2));
+        explicit MCTSEngine(uint32_t thread_num, double explore_c = std::sqrt(2));
 
         bool StartSearch(const ChessBoardState &state, bool black_first);
 
@@ -73,6 +71,7 @@ namespace gomoku {
         std::shared_ptr<Node> root_node_;
         bool root_black;
         ChessBoardState root_board_;
+        uint32_t thread_num_;
 
         void LoopExpandTree();
 

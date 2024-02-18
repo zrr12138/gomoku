@@ -19,11 +19,12 @@
 #include <algorithm>
 
 namespace gomoku {
-    MCTSEngine::MCTSEngine(double explore_c) : C(explore_c), root_n(0) {
+    MCTSEngine::MCTSEngine(uint32_t thread_num, double explore_c) : C(explore_c), root_n(0), thread_num_(thread_num) {
 
     }
 
     bool MCTSEngine::StartSearch(const ChessBoardState &state, bool black_first) {
+        assert(thread_num_ > 512);
         stop_.store(false);
         LOG(INFO) << __func__ << " board: " << state.hash() << " black_first: " << black_first;
         //初始化根节点x
@@ -31,7 +32,7 @@ namespace gomoku {
         root_black = black_first;
         root_node_ = std::make_shared<Node>(black_first, this);
         root_board_ = state;
-        threadPool.Init(1, std::bind(&MCTSEngine::LoopExpandTree, this));
+        threadPool.Init(thread_num_, std::bind(&MCTSEngine::LoopExpandTree, this));
         threadPool.Start();
         return true;
     }
@@ -61,18 +62,16 @@ namespace gomoku {
     }
 
     ChessMove MCTSEngine::GetResult() {
-        common::ReadLockGuard r_guard(root_node_->moves_lock);
-        auto extremum = root_node_->moves.begin()->second->GetWinRate(root_black);
-        auto it = root_node_->moves.begin();
-        ChessMove move = it->first;
-        while (++it != root_node_->moves.end()) {
-            auto temp = it->second->GetWinRate(root_black);
-            if (temp > extremum) {
-                extremum = temp;
-                move = it->first;
-            }
-        }
-        return move;
+        auto is_black = root_node_->is_black;
+        auto index = std::max_element(root_node_->sub_nodes, root_node_->sub_nodes + root_node_->moves_size,
+                                      [is_black](const std::shared_ptr<Node> &x,
+                                                 const std::shared_ptr<Node> &y) -> bool {
+                                          assert(x);
+                                          assert(y);
+                                          return x->GetWinRate(is_black) < y->GetWinRate(is_black);
+                                      }) - root_node_->sub_nodes;
+
+        return root_node_->moves[index];
     }
 
     void MCTSEngine::DumpTree() {
@@ -91,13 +90,13 @@ namespace gomoku {
         os << " value:" << node->GetValue() << " b_win rate:"
            << node->GetWinRate(true) << " w_win rate:" << node->GetWinRate(false) << " bwc:" << node->black_win_count
            << " wwc" << node->white_win_count << " n:" << node->n;
-        for (auto &mv: node->moves) {
-            PrintNode(os, mv.second.get(), mv.first, deep + 1);
+        for (int i = 0; i < node->moves_size; i++) {
+            PrintNode(os, node->sub_nodes[i].get(), node->moves[i], deep + 1);
         }
     }
 
     Node::Node(bool isBlack, MCTSEngine *engine) : is_black(isBlack), n(0), black_win_count(0), white_win_count(0),
-                                                   engine_(engine), access_cnt(0), unexpanded_nodes_inited(false) {
+                                                   engine_(engine), access_cnt(0), moves_size(0), best_move_index(-1) {
 
     }
 
@@ -110,12 +109,13 @@ namespace gomoku {
         }
     }
 
-    void Node::InitUnexpandedNode(SearchCtx *ctx) {
-        if (!unexpanded_nodes_inited) {
-            std::unique_lock<std::mutex> guard(unexpanded_nodes_lock);
-            if (!unexpanded_nodes_inited) {
-                ctx->board.GetMoves(is_black, &unexpanded_nodes);
-                unexpanded_nodes_inited = true;
+    void Node::InitUnexpandedNode(const ChessBoardState &board) {
+        assert(board.End() == BoardResult::NOT_END);
+        for (uint32_t i = 0; i < BOARD_SIZE; i++) {
+            for (uint32_t j = 0; j < BOARD_SIZE; j++) {
+                if (board.GetChessAt(i, j) == Chess::EMPTY) {
+                    moves[moves_size++] = ChessMove(is_black, i, j);
+                }
             }
         }
     }
@@ -125,51 +125,43 @@ namespace gomoku {
         if (ctx->board.End() != BoardResult::NOT_END) {
             return ctx->board.End();
         }
-        InitUnexpandedNode(ctx);
         int64_t index = access_cnt.fetch_add(1);
-        if (index >= unexpanded_nodes.size()) {
-            if (index % 64 == 0) {
-                //for performance
-                std::pair<ChessMove, std::shared_ptr<Node>> move;
-                {
-                    common::ReadLockGuard r_guard(moves_lock);
-                    assert(!moves.empty());
-                    move = *std::max_element(moves.begin(), moves.end(),
-                                             [](const std::pair<ChessMove, std::shared_ptr<Node>> &x,
-                                                const std::pair<ChessMove, std::shared_ptr<Node>> &y) -> bool {
-                                                 return x.second->GetValue() < y.second->GetValue();
-                                             });
-                }
-                {
-                    common::WriteLockGuard w_gurad(best_move_lock_);
-                    best_move_ = move;
-                }
+        if (index == 0) {
+            InitUnexpandedNode(ctx->board);
+            assert(moves_size == BOARD_SIZE * BOARD_SIZE - ctx->board.GetMoveNums());
+        }
+        if (index >= (BOARD_SIZE * BOARD_SIZE - ctx->board.GetMoveNums())) {
+            if (index % 64 == 0 && index - engine_->thread_num_ > 0) {
+                assert(moves_size > 0);
+                int64_t r = std::min(index - engine_->thread_num_, moves_size.load());
+                best_move_index = std::max_element(sub_nodes, sub_nodes + r,
+                                                   [](const std::shared_ptr<Node> &x,
+                                                      const std::shared_ptr<Node> &y) -> bool {
+                                                       assert(x);
+                                                       assert(y);
+                                                       return x->GetValue() < y->GetValue();
+                                                   }) - sub_nodes;
             }
-            std::pair<ChessMove, std::shared_ptr<Node>> best_move;
-            {
-                common::ReadLockGuard r_guard(best_move_lock_);
-                assert(best_move_.second != nullptr);
-                best_move = best_move_;
-            }
-            ctx->board.Move(best_move.first);
-            auto res = best_move.second->ExpandTree(ctx);
-            ctx->board.WithdrawMove(best_move.first);
+            auto move_index = best_move_index.load();
+            assert(move_index > 0);
+            auto move = moves[move_index];
+            auto node = sub_nodes[move_index];
+            ctx->board.Move(move);
+            auto res = node->ExpandTree(ctx);
+            ctx->board.WithdrawMove(move);
             UpdateValue(res);
             return res;
         } else {
-            assert(index < unexpanded_nodes.size());
-            auto move = std::make_pair(unexpanded_nodes[index], std::make_shared<Node>(!is_black, engine_));
-            if (index == 0) {
-                common::WriteLockGuard w_gurad(best_move_lock_);
-                best_move_ = move;
+            while (index >= moves_size);
+            auto move = moves[index];
+            auto node = std::make_shared<Node>(!is_black, engine_);
+            sub_nodes[index] = node;
+            if (index == 1) {
+                best_move_index = 1;
             }
-            {
-                common::WriteLockGuard w_gurad(moves_lock);
-                moves.emplace_back(move);
-            }
-            ctx->board.Move(move.first);
-            auto res = move.second->Simulation(ctx);
-            ctx->board.WithdrawMove(move.first);
+            ctx->board.Move(move);
+            auto res = node->Simulation(ctx);
+            ctx->board.WithdrawMove(move);
             UpdateValue(res);
             return res;
         }

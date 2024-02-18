@@ -92,7 +92,9 @@ namespace gomoku {
            << node->GetWinRate(true) << " w_win rate:" << node->GetWinRate(false) << " bwc:" << node->black_win_count
            << " wwc" << node->white_win_count << " n:" << node->n;
         for (int i = 0; i < node->moves_size; i++) {
-            PrintNode(os, node->sub_nodes[i].get(), node->moves[i], deep + 1);
+            if (node->sub_nodes[i]) {
+                PrintNode(os, node->sub_nodes[i].get(), node->moves[i], deep + 1);
+            }
         }
     }
 

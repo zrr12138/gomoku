@@ -27,6 +27,7 @@ namespace gomoku {
         ChessMove moves[BOARD_SIZE*BOARD_SIZE];
         std::shared_ptr<Node> sub_nodes[BOARD_SIZE*BOARD_SIZE];
 
+
         std::atomic<int64_t> moves_size;
         std::atomic<int64_t> best_move_index;
 

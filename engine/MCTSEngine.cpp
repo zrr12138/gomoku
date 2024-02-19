@@ -117,7 +117,8 @@ namespace gomoku {
         for (uint32_t i = 0; i < BOARD_SIZE; i++) {
             for (uint32_t j = 0; j < BOARD_SIZE; j++) {
                 if (board.GetChessAt(i, j) == Chess::EMPTY) {
-                    moves[moves_size++] = ChessMove(is_black, i, j);
+                    moves[moves_size] = ChessMove(is_black, i, j);
+                    moves_size++;
                 }
             }
         }

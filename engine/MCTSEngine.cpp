@@ -121,7 +121,7 @@ namespace gomoku {
 
     Node::Node(bool isBlack, MCTSEngine *engine) : is_black(isBlack), n(0), black_win_count(0), white_win_count(0),
                                                    engine_(engine), access_cnt(0), inited(false),
-                                                   unexpanded_move_size(0) {
+                                                   unexpanded_move_size(0),unexpanded_moves(nullptr) {
 
     }
 

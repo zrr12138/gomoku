@@ -10,8 +10,8 @@
 #include "MCTSEngine.h"
 #include <cmath>
 #include "gflags/gflags.h"
-DEFINE_int32(thread_num, 4, "");
-DEFINE_int32(test_time, 5, "");
+DEFINE_int32(thread_num, 8, "");
+DEFINE_int32(test_time, 3, "");
 void EvaluateManualTest();
 
 void EngineManualTest();

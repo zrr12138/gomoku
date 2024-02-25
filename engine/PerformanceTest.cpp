@@ -29,7 +29,6 @@ int main(int argc, char *argv[]) {
     board.Move(gomoku::ChessMove(true, 7, 9));
     board.Move(gomoku::ChessMove(false, 8, 7));
     board.Move(gomoku::ChessMove(false, 8, 8));
-    board.Move(gomoku::ChessMove(false, 8, 9));
 //    board.Move(gomoku::ChessMove(false,6,7));
 //    board.Move(gomoku::ChessMove(true,7,8));
 //    board.Move(gomoku::ChessMove(false,6,8));

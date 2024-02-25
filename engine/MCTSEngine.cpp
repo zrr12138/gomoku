@@ -148,7 +148,6 @@ namespace gomoku {
         }
         while (!inited.load(std::memory_order_relaxed));
         assert(unexpanded_move_size<=max_move_size);
-        assert(engine_->thread_num_<=unexpanded_move_size);
         if (index >= unexpanded_move_size) {
             std::pair<ChessMove, std::shared_ptr<Node>> move_node;
             {
@@ -169,7 +168,7 @@ namespace gomoku {
             assert(move_node.second);
             auto &move = move_node.first;
             auto &node = move_node.second;
-            assert(move.x != UINT32_MAX && move.y != UINT32_MAX && node);
+            assert(move.x != -1 && move.y != -1 && node);
             ctx->board.Move(move);
             auto res = node->ExpandTree(ctx);
             UpdateValue(res);
@@ -179,7 +178,7 @@ namespace gomoku {
             std::pair<ChessMove, std::shared_ptr<Node>> move_node =
                     std::make_pair(move, std::make_shared<Node>(!is_black, engine_));
             auto &node = move_node.second;
-            assert(move.x != UINT32_MAX && move.y != UINT32_MAX && node);
+            assert(move.x != -1 && move.y != -1 && node);
             {
                 common::WriteLockGuard gurad(move2node_lock_);
                 move2node_.push_back(move_node);
@@ -236,7 +235,7 @@ namespace gomoku {
                 return 0;
             }
         }
-        total_n = static_cast<double >(engine_->root_n);
+        total_n = static_cast<double >(engine_->root_node_->n);
         return dw / dn + engine_->C * std::sqrt(std::log(total_n) / dn);
     }
 

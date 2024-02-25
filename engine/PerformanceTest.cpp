@@ -13,8 +13,8 @@
 #include "MCTSEngine.h"
 #include <cmath>
 #include "gflags/gflags.h"
-DEFINE_int32(thread_num, 8, "");
-DEFINE_int32(test_time, 1, "");
+DEFINE_int32(thread_num, 1, "");
+DEFINE_int32(test_time, 3, "");
 int main(int argc, char *argv[]) {
     // Initialize Google’s logging library.
     gflags::ParseCommandLineFlags(&argc, &argv, false);
@@ -43,5 +43,6 @@ int main(int argc, char *argv[]) {
     board.PrintOnTerminal();
     std::cout << "engine move:" << move;
     engine.Stop();
+    engine.DumpTree();
     std::cout << "root_n:" << engine.GetRootN();
 }

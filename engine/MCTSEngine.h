@@ -69,7 +69,6 @@ namespace gomoku {
         int64_t GetRootN();
 
     private:
-        std::atomic<int64_t> root_n;
         const double C;
         std::atomic<bool> stop_;
         common::ThreadPool threadPool;

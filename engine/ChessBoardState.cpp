@@ -431,7 +431,7 @@ namespace gomoku {
     ChessMove::ChessMove(bool isBlack, int x, int y) : is_black(isBlack), x(x), y(y) {
     }
 
-    ChessMove::ChessMove() : is_black(true), x(UINT32_MAX), y(UINT32_MAX) {
+    ChessMove::ChessMove() : is_black(true), x(-1), y(-1) {
     }
 
     std::ostream &operator<<(std::ostream &os, const ChessMove &move) {

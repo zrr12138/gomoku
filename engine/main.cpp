@@ -99,9 +99,9 @@ void EvaluateManualTest() {
     gomoku::Engine engine;
     gomoku::ChessBoardState board;
     bool is_black = true;
-    int x = UINT32_MAX, y = UINT32_MAX;
+    int x = -1, y = -1;
     do {
-        if (x != UINT32_MAX && y != UINT32_MAX) {
+        if (x != -1 && y != -1) {
             board.Move(gomoku::ChessMove(is_black, x, y));
             is_black = !is_black;
         }

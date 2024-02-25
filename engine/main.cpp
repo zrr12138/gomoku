@@ -9,7 +9,9 @@
 #include "Evaluate.h"
 #include "MCTSEngine.h"
 #include <cmath>
-
+#include "gflags/gflags.h"
+DEFINE_int32(thread_num, 4, "");
+DEFINE_int32(test_time, 5, "");
 void EvaluateManualTest();
 
 void EngineManualTest();
@@ -69,7 +71,7 @@ int main(int argc, char *argv[]) {
 }
 
 void EngineManualTest() {
-    gomoku::MCTSEngine engine(64);
+    gomoku::MCTSEngine engine(FLAGS_thread_num);
     gomoku::ChessBoardState board;
     bool is_black = false;
     engine.StartSearch(board, is_black);
@@ -83,7 +85,7 @@ void EngineManualTest() {
             board.Move(gomoku::ChessMove(is_black, x, y));
             engine.Action(gomoku::ChessMove(is_black, x, y));
         } else {
-            std::this_thread::sleep_for(std::chrono::seconds(30));
+            std::this_thread::sleep_for(std::chrono::seconds(FLAGS_test_time));
             std::cout << "root_n:" << engine.GetRootN() << std::endl;
             auto move = engine.GetResult();
             board.Move(move);

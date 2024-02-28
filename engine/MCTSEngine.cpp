@@ -71,11 +71,11 @@ namespace gomoku {
             }
         }
         if (node == nullptr) {
-            return false;
+            node = std::make_shared<Node>(!root_node_->is_black, this);
         }
         {
             common::WriteLockGuard guard(root_lock_);
-            root_board_->Move(move);
+            assert(root_board_->Move(move));
             root_node_ = node;
         }
         if (root_board_->End() != BoardResult::NOT_END) {
@@ -85,7 +85,11 @@ namespace gomoku {
     }
 
     ChessMove MCTSEngine::GetResult() {
-        auto is_black = root_node_->is_black;
+        bool is_black;
+        {
+            common::ReadLockGuard guard(root_lock_);
+            is_black = root_node_->is_black;
+        }
         auto move = std::max_element(root_node_->move2node_.begin(), root_node_->move2node_.end(),
                                      [is_black](const std::pair<ChessMove, std::shared_ptr<Node>> &x,
                                                 const std::pair<ChessMove, std::shared_ptr<Node>> &y) -> bool {
@@ -121,7 +125,7 @@ namespace gomoku {
 
     Node::Node(bool isBlack, MCTSEngine *engine) : is_black(isBlack), n(0), black_win_count(0), white_win_count(0),
                                                    engine_(engine), access_cnt(0), inited(false),
-                                                   unexpanded_move_size(0),unexpanded_moves(nullptr) {
+                                                   unexpanded_move_size(0), unexpanded_moves(nullptr) {
 
     }
 
@@ -147,7 +151,7 @@ namespace gomoku {
             Init(ctx->board);
         }
         while (!inited.load(std::memory_order_relaxed));
-        assert(unexpanded_move_size<=max_move_size);
+        assert(unexpanded_move_size <= max_move_size);
         if (index >= unexpanded_move_size) {
             std::pair<ChessMove, std::shared_ptr<Node>> move_node;
             {

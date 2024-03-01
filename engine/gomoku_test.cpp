@@ -13,9 +13,7 @@
 #include "MCTSEngine.h"
 #include <cmath>
 #include "gflags/gflags.h"
-
-DEFINE_int32(thread_num, 4, "");
-DEFINE_int32(test_time, 5, "");
+#include "common_flags.h"
 
 void test1(gomoku::ChessBoardState *board, bool *black_first) {
     *black_first = true;
@@ -68,11 +66,11 @@ void test3(gomoku::ChessBoardState *board, bool *black_first) {
 
 void Deduction(gomoku::ChessBoardState board, bool black) {
     board.PrintOnTerminal();
-    gomoku::MCTSEngine engine(FLAGS_thread_num);
+    gomoku::MCTSEngine engine(gomoku::FLAGS_thread_num);
     engine.StartSearch(board, black);
     int step = 1;
     while (board.End() == BoardResult::NOT_END) {
-        std::this_thread::sleep_for(std::chrono::seconds(FLAGS_test_time));
+        std::this_thread::sleep_for(std::chrono::seconds(gomoku::FLAGS_think_time));
         auto move = engine.GetResult();
         std::cout << "engine move:" << move << std::endl;
         std::cout << "root_n:" << engine.GetRootN() << std::endl;

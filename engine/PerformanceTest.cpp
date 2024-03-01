@@ -13,8 +13,8 @@
 #include "MCTSEngine.h"
 #include <cmath>
 #include "gflags/gflags.h"
-DEFINE_int32(thread_num, 1, "");
-DEFINE_int32(test_time, 3, "");
+#include "common_flags.h"
+
 int main(int argc, char *argv[]) {
     // Initialize Google’s logging library.
     gflags::ParseCommandLineFlags(&argc, &argv, false);
@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
     FLAGS_log_dir = ".";
     FLAGS_v = 2;
 
-    gomoku::MCTSEngine engine(FLAGS_thread_num);
+    gomoku::MCTSEngine engine(gomoku::FLAGS_thread_num);
     gomoku::ChessBoardState board;
     board.Move(gomoku::ChessMove(true, 7, 7));
     board.Move(gomoku::ChessMove(true, 7, 8));
@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
 //    board.Move(gomoku::ChessMove(true,7,6));
     engine.StartSearch(board, false);
     board.PrintOnTerminal();
-    std::this_thread::sleep_for(std::chrono::seconds(FLAGS_test_time));
+    std::this_thread::sleep_for(std::chrono::seconds(gomoku::FLAGS_think_time));
     auto move = engine.GetResult();
     board.Move(move);
     board.PrintOnTerminal();

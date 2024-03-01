@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 14)
 add_subdirectory(common)
 add_subdirectory(third-party)
 # 添加源文件
-set(SOURCES ChessBoardState.cpp Engine.cpp Evaluate.cpp MCTSEngine.cpp)
+set(SOURCES ChessBoardState.cpp Engine.cpp Evaluate.cpp MCTSEngine.cpp common_flags.cpp)
 
 # 添加头文件路径
 include_directories(
@@ -25,11 +25,12 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O2")
 # 生成可执行文件
 
 add_library(gomoku_lib ${SOURCES})
-target_link_libraries(gomoku_lib
-        common_lib
-        glog::glog
-        gflags
-        )
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux") #linux环境下链接tcmalloc
+    target_link_libraries(gomoku_lib common_lib glog::glog gflags tcmalloc)
+else()
+    target_link_libraries(gomoku_lib common_lib glog::glog gflags)
+endif()
 
 add_executable(${PROJECT_NAME} main.cpp)
 target_link_libraries(${PROJECT_NAME} gomoku_lib)
@@ -40,7 +41,11 @@ target_link_libraries(PerformanceTest gomoku_lib)
 add_executable(gomoku_test gomoku_test.cpp)
 target_link_libraries(gomoku_test gomoku_lib)
 
-# 设置输出目录
-set_target_properties(${PROJECT_NAME} PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
-        )
+add_executable(ManualTest ManualTest.cpp)
+target_link_libraries(ManualTest gomoku_lib)
+
+
+## 设置输出目录
+#set_target_properties(${PROJECT_NAME} PROPERTIES
+#        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+#        )

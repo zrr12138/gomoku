@@ -13,15 +13,27 @@ enum Chess {
     BLACK = 1,
     WHITE = 2
 };
+enum BoardResult {
+    BLACK_WIN = 0,
+    WHITE_WIN = 1,
+    BALANCE = 2,
+    NOT_END = 3,
+};
 namespace gomoku {
-    const uint32_t BOARD_SIZE = 15;
+    const int BOARD_SIZE = 15;
+
     struct ChessMove {
         bool is_black;
-        uint32_t x, y;
+        int x, y;
+
+        bool operator==(const ChessMove &rhs) const;
+
+        bool operator!=(const ChessMove &rhs) const;
 
         friend std::ostream &operator<<(std::ostream &os, const ChessMove &move);
 
-        ChessMove(bool isBlack, uint32_t x, uint32_t y);
+        ChessMove(bool isBlack, int x, int y);
+
         ChessMove();
 
     };
@@ -30,6 +42,7 @@ namespace gomoku {
     private:
         int is_end;
         bool is_init;
+        int move_num;
     public:
         bool isInit() const;
 
@@ -37,9 +50,11 @@ namespace gomoku {
 
     private:
         Chess board[BOARD_SIZE][BOARD_SIZE]{};
-        void update_is_end_from(uint32_t x,uint32_t y); //以某个点为中心判断游戏是否结束。
+
+        void update_is_end_from(int x, int y); //以某个点为中心判断游戏是否结束。
     public:
         ChessBoardState();
+
         explicit ChessBoardState(const std::vector<ChessMove> &moves);
 
         friend std::ostream &operator<<(std::ostream &os, const ChessBoardState &state);
@@ -48,23 +63,38 @@ namespace gomoku {
 
         void GetMoves(bool is_black, std::vector<ChessMove> *moves) const;
 
-        Chess GetChessAt(uint32_t x, uint32_t y) const;
+        Chess GetChessAt(int x, int y) const;
 
         bool Move(ChessMove move);
+
+        int GetMoveNums() const;
+
+        ChessMove GetNthMove(bool is_black, int index);
+
         /**
      * 判断游戏是否结束,O（1）复杂度
      * @return 0代表未结束，1代表黑棋获胜，0代表白棋获胜
      */
         int IsEnd() const;
+
+        BoardResult End() const;
+
         bool IsEmpty();
+
         void ClearBoard();
+
+        ChessMove getRandMove(bool is_black);
 
         bool WithdrawMove(ChessMove move);
 
-        void GetPositionVec(std::vector<std::pair<uint32_t, uint32_t>> *black_pos,
-                            std::vector<std::pair<uint32_t, uint32_t>> *white_pos) const;
-        void GetPositionMap(std::map<std::pair<uint32_t,uint32_t>,Chess> *pos2chess) const;
+        void GetPositionVec(std::vector<std::pair<int, int>> *black_pos,
+                            std::vector<std::pair<int, int>> *white_pos) const;
+
+        void GetPositionMap(std::map<std::pair<int, int>, Chess> *pos2chess) const;
+
         void PrintOnTerminal();
+
+        bool IsCutMove(const ChessMove &move) const;
     };
 
 }

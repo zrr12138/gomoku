@@ -7,13 +7,17 @@
 #include "ChessBoardState.h"
 #include "glog/logging.h"
 #include "Evaluate.h"
-
+#include "MCTSEngine.h"
+#include <cmath>
+#include "gflags/gflags.h"
+DEFINE_int32(thread_num, 8, "");
+DEFINE_int32(test_time, 3, "");
 void EvaluateManualTest();
 
 void EngineManualTest();
 
-void BoardEvaluateTest(std::vector<std::pair<uint32_t, uint32_t>> &black_moves,
-                       std::vector<std::pair<uint32_t, uint32_t>> &white_moves);
+void BoardEvaluateTest(std::vector<std::pair<int, int>> &black_moves,
+                       std::vector<std::pair<int, int>> &white_moves);
 
 void ChessBoard_1();
 
@@ -36,8 +40,13 @@ void ChessBoard_9();
 void ChessBoard_10();
 
 void EngineTest_1();
-#include <iostream>
-#include <cmath>
+
+void EngineTest_2();
+
+void EngineTest_3();
+
+void EngineTest_4();
+
 
 int main(int argc, char *argv[]) {
     // Initialize Google’s logging library.
@@ -57,44 +66,44 @@ int main(int argc, char *argv[]) {
 //    ChessBoard_8();
 //    ChessBoard_9();
 //    ChessBoard_10();
+//    EngineTest_3();
+    //EngineTest_4();
 }
 
 void EngineManualTest() {
-    gomoku::Engine engine;
-    engine.SetEvaluateFunction(&gomoku::Evalute::evaluate_3);
+    gomoku::MCTSEngine engine(FLAGS_thread_num);
     gomoku::ChessBoardState board;
-    bool is_black = true;
+    bool is_black = false;
+    engine.StartSearch(board, is_black);
     while (!board.IsEnd()) {
         board.PrintOnTerminal();
-        std::cout << "The current situation evaluation score is:" << engine.Evaluate(board) << std::endl;
         if (is_black) {
             std::cout << "Please enter the coordinates of the next move:" << std::endl;
             int x, y;
             std::cin >> x >> y;
             LOG(INFO) << "user move x:" << x << "y:" << y;
             board.Move(gomoku::ChessMove(is_black, x, y));
-
+            engine.Action(gomoku::ChessMove(is_black, x, y));
         } else {
-            engine.Stop();
-            if (!engine.StartSearch(board, false)) {
-                break;
-            }
-            std::this_thread::sleep_for(std::chrono::seconds(3));
+            std::this_thread::sleep_for(std::chrono::seconds(FLAGS_test_time));
+            std::cout << "root_n:" << engine.GetRootN() << std::endl;
             auto move = engine.GetResult();
             board.Move(move);
             std::cout << "engine move:" << move;
+            engine.Action(move);
         }
         is_black = !is_black;
     }
+    engine.Stop();
 }
 
 void EvaluateManualTest() {
     gomoku::Engine engine;
     gomoku::ChessBoardState board;
     bool is_black = true;
-    uint32_t x = UINT32_MAX, y = UINT32_MAX;
+    int x = -1, y = -1;
     do {
-        if (x != UINT32_MAX && y != UINT32_MAX) {
+        if (x != -1 && y != -1) {
             board.Move(gomoku::ChessMove(is_black, x, y));
             is_black = !is_black;
         }
@@ -104,8 +113,8 @@ void EvaluateManualTest() {
     } while (std::cin >> x >> y);
 }
 
-void BoardEvaluateTest(std::vector<std::pair<uint32_t, uint32_t>> &black_moves,
-                       std::vector<std::pair<uint32_t, uint32_t>> &white_moves) {
+void BoardEvaluateTest(std::vector<std::pair<int, int>> &black_moves,
+                       std::vector<std::pair<int, int>> &white_moves) {
     gomoku::Engine engine;
     engine.SetEvaluateFunction(&gomoku::Evalute::evaluate_3);
     std::vector<gomoku::ChessMove> moves;
@@ -121,116 +130,119 @@ void BoardEvaluateTest(std::vector<std::pair<uint32_t, uint32_t>> &black_moves,
 }
 
 void ChessBoard_1() {
-    std::vector<std::pair<uint32_t, uint32_t>> black_moves = {{7, 7},
-                                                              {7, 8},
-                                                              {7, 9}};
-    std::vector<std::pair<uint32_t, uint32_t>> white_moves = {{0, 2},
-                                                              {0, 3},
-                                                              {0, 4}};
+    std::vector<std::pair<int, int>> black_moves = {{7, 7},
+                                                    {7, 8},
+                                                    {7, 9}};
+    std::vector<std::pair<int, int>> white_moves = {{0, 2},
+                                                    {0, 3},
+                                                    {0, 4}};
     BoardEvaluateTest(black_moves, white_moves);
 }
 
 void ChessBoard_2() {
-    std::vector<std::pair<uint32_t, uint32_t>> black_moves = {{7, 7},
-                                                              {7, 8},
-                                                              {7, 9}};
-    std::vector<std::pair<uint32_t, uint32_t>> white_moves = {{6, 7},
-                                                              {6, 8},
-                                                              {6, 9}};
+    std::vector<std::pair<int, int>> black_moves = {{7, 7},
+                                                    {7, 8},
+                                                    {7, 9}};
+    std::vector<std::pair<int, int>> white_moves = {{6, 7},
+                                                    {6, 8},
+                                                    {6, 9}};
     BoardEvaluateTest(black_moves, white_moves);
 }
 
 void ChessBoard_3() {
-    std::vector<std::pair<uint32_t, uint32_t>> black_moves = {{7, 7},
-                                                              {7, 6},
-                                                              {8, 6},
-                                                              {9, 5},
-                                                              {6, 6}};
-    std::vector<std::pair<uint32_t, uint32_t>> white_moves = {{6, 7},
-                                                              {7, 8},
-                                                              {8, 7},
-                                                              {6, 8},
-                                                              {9, 6}};
+    std::vector<std::pair<int, int>> black_moves = {{7, 7},
+                                                    {7, 6},
+                                                    {8, 6},
+                                                    {9, 5},
+                                                    {6, 6}};
+    std::vector<std::pair<int, int>> white_moves = {{6, 7},
+                                                    {7, 8},
+                                                    {8, 7},
+                                                    {6, 8},
+                                                    {9, 6}};
     BoardEvaluateTest(black_moves, white_moves);
 }
 
 void ChessBoard_4() {
-    std::vector<std::pair<uint32_t, uint32_t>> black_moves = {{7, 7},
-                                                              {7, 6},
-                                                              {8, 6},
-                                                              {9, 5},
-                                                              {6, 6}};
-    std::vector<std::pair<uint32_t, uint32_t>> white_moves = {{9, 8},
-                                                              {7, 8},
-                                                              {8, 7},
-                                                              {6, 8},
-                                                              {9, 6}};
+    std::vector<std::pair<int, int>> black_moves = {{7, 7},
+                                                    {7, 6},
+                                                    {8, 6},
+                                                    {9, 5},
+                                                    {6, 6}};
+    std::vector<std::pair<int, int>> white_moves = {{9, 8},
+                                                    {7, 8},
+                                                    {8, 7},
+                                                    {6, 8},
+                                                    {9, 6}};
     BoardEvaluateTest(black_moves, white_moves);
 }
 
 void ChessBoard_5() {
-    std::vector<std::pair<uint32_t, uint32_t>> black_moves = {{7, 7},
-                                                              {7, 8},
-                                                              {7, 9}};
-    std::vector<std::pair<uint32_t, uint32_t>> white_moves = {{0, 2},
-                                                              {0, 3}};
+    std::vector<std::pair<int, int>> black_moves = {{7, 7},
+                                                    {7, 8},
+                                                    {7, 9}};
+    std::vector<std::pair<int, int>> white_moves = {{0, 2},
+                                                    {0, 3}};
     BoardEvaluateTest(black_moves, white_moves);
 }
 
 void ChessBoard_6() {
-    std::vector<std::pair<uint32_t, uint32_t>> black_moves = {{7, 7},
-                                                              {7, 8},
-                                                              {7, 9}};
-    std::vector<std::pair<uint32_t, uint32_t>> white_moves = {{6, 7},
-                                                              {6, 8}};
+    std::vector<std::pair<int, int>> black_moves = {{7, 7},
+                                                    {7, 8},
+                                                    {7, 9}};
+    std::vector<std::pair<int, int>> white_moves = {{6, 7},
+                                                    {6, 8}};
     BoardEvaluateTest(black_moves, white_moves);
 }
 
 void ChessBoard_7() {
-    std::vector<std::pair<uint32_t, uint32_t>> black_moves = {{7, 7},
-                                                              {7, 8},
-                                                              {7, 9},
-                                                              {7, 10},
-                                                              {7, 11}};
-    std::vector<std::pair<uint32_t, uint32_t>> white_moves = {};
+    std::vector<std::pair<int, int>> black_moves = {{7, 7},
+                                                    {7, 8},
+                                                    {7, 9},
+                                                    {7, 10},
+                                                    {7, 11}};
+    std::vector<std::pair<int, int>> white_moves = {};
     BoardEvaluateTest(black_moves, white_moves
     );
 }
 
 void ChessBoard_8() {
-    std::vector<std::pair<uint32_t, uint32_t>> black_moves = {{7, 7},
-                                                              {7, 8},
-                                                              {7, 9},
-                                                              {7, 10},
+    std::vector<std::pair<int, int>> black_moves = {{7, 7},
+                                                    {7, 8},
+                                                    {7, 9},
+                                                    {7, 10},
     };
-    std::vector<std::pair<uint32_t, uint32_t>> white_moves = {{7, 11},
-                                                              {7, 6},
-                                                              {8, 8},
-                                                              {6, 8}};
+    std::vector<std::pair<int, int>> white_moves = {{7, 11},
+                                                    {7, 6},
+                                                    {8, 8},
+                                                    {6, 8}};
     BoardEvaluateTest(black_moves, white_moves);
 }
 
 void ChessBoard_9() {
-    std::vector<std::pair<uint32_t, uint32_t>> black_moves = {{7,7}};
-    std::vector<std::pair<uint32_t, uint32_t>> white_moves = {{2,3}};;
+    std::vector<std::pair<int, int>> black_moves = {{7, 7}};
+    std::vector<std::pair<int, int>> white_moves = {{2, 3}};;
     BoardEvaluateTest(black_moves, white_moves);
 }
 
 void ChessBoard_10() {
-    std::vector<std::pair<uint32_t, uint32_t>> black_moves = {{4, 3}};
-    std::vector<std::pair<uint32_t, uint32_t>> white_moves = {{3, 4},
-                                                              {2, 5}};
+    std::vector<std::pair<int, int>> black_moves = {{4, 3}};
+    std::vector<std::pair<int, int>> white_moves = {{3, 4},
+                                                    {2, 5}};
     BoardEvaluateTest(black_moves, white_moves);
 }
-void EngineTest_1(){
+
+void EngineTest_1() {
     gomoku::Engine engine;
     engine.SetEvaluateFunction(&gomoku::Evalute::evaluate_3);
     gomoku::ChessBoardState board;
-    board.Move(gomoku::ChessMove(true,7,7));
-    board.Move(gomoku::ChessMove(false,5,6));
-    board.Move(gomoku::ChessMove(true,6,6));
-    board.Move(gomoku::ChessMove(false,6,7));
-    board.Move(gomoku::ChessMove(true,5,5));
+    board.Move(gomoku::ChessMove(true, 7, 7));
+    board.Move(gomoku::ChessMove(false, 5, 6));
+    board.Move(gomoku::ChessMove(true, 6, 6));
+    board.Move(gomoku::ChessMove(false, 6, 7));
+    board.Move(gomoku::ChessMove(true, 5, 5));
+    board.Move(gomoku::ChessMove(false, 7, 8));
+    board.Move(gomoku::ChessMove(true, 8, 8));
     engine.StartSearch(board, false);
     board.PrintOnTerminal();
     std::this_thread::sleep_for(std::chrono::seconds(10));
@@ -239,4 +251,63 @@ void EngineTest_1(){
     board.PrintOnTerminal();
     std::cout << "engine move:" << move;
     engine.Stop();
+}
+
+void EngineTest_2() {
+    gomoku::Engine engine;
+    engine.SetEvaluateFunction(&gomoku::Evalute::evaluate_3);
+    gomoku::ChessBoardState board;
+    board.Move(gomoku::ChessMove(true, 7, 7));
+    board.Move(gomoku::ChessMove(false, 7, 8));
+    board.Move(gomoku::ChessMove(true, 6, 7));
+    board.Move(gomoku::ChessMove(false, 5, 7));
+    board.Move(gomoku::ChessMove(true, 5, 8));
+    engine.StartSearch(board, false);
+    board.PrintOnTerminal();
+    std::this_thread::sleep_for(std::chrono::seconds(10));
+    auto move = engine.GetResult();
+    board.Move(move);
+    board.PrintOnTerminal();
+    std::cout << "engine move:" << move;
+    engine.Stop();
+}
+
+void EngineTest_3() {
+    gomoku::MCTSEngine engine(1);
+    gomoku::ChessBoardState board;
+    board.Move(gomoku::ChessMove(true, 7, 7));
+    board.Move(gomoku::ChessMove(false, 7, 8));
+    board.Move(gomoku::ChessMove(true, 6, 7));
+    board.Move(gomoku::ChessMove(false, 5, 7));
+    board.Move(gomoku::ChessMove(true, 5, 8));
+    engine.StartSearch(board, false);
+    board.PrintOnTerminal();
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    auto move = engine.GetResult();
+    board.Move(move);
+    board.PrintOnTerminal();
+    std::cout << "engine move:" << move;
+    engine.Stop();
+    engine.DumpTree();
+}
+
+void EngineTest_4() {
+    gomoku::MCTSEngine engine(10);
+    gomoku::ChessBoardState board;
+    board.Move(gomoku::ChessMove(true, 7, 7));
+    board.Move(gomoku::ChessMove(false, 6, 7));
+    board.Move(gomoku::ChessMove(true, 7, 8));
+    board.Move(gomoku::ChessMove(false, 6, 8));
+    board.Move(gomoku::ChessMove(true, 7, 9));
+    board.Move(gomoku::ChessMove(false, 7, 10));
+    board.Move(gomoku::ChessMove(true, 7, 6));
+    engine.StartSearch(board, false);
+    board.PrintOnTerminal();
+    std::this_thread::sleep_for(std::chrono::seconds(60));
+    auto move = engine.GetResult();
+    board.Move(move);
+    board.PrintOnTerminal();
+    std::cout << "engine move:" << move;
+    engine.Stop();
+    engine.DumpTree();
 }

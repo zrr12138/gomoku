@@ -6,6 +6,7 @@
 #include "ChessBoardState.h"
 #include <iostream>
 #include "glog/logging.h"
+#include <random>
 
 namespace gomoku {
 
@@ -19,20 +20,20 @@ namespace gomoku {
         return h;
     }
 
-    Chess ChessBoardState::GetChessAt(uint32_t x, uint32_t y) const {
+    Chess ChessBoardState::GetChessAt(int x, int y) const {
         assert(x < BOARD_SIZE);
         assert(y < BOARD_SIZE);
         return board[x][y];
     }
 
-    ChessBoardState::ChessBoardState(const std::vector<ChessMove> &moves) : is_end(0),is_init(true) {
+    ChessBoardState::ChessBoardState(const std::vector<ChessMove> &moves) : is_end(0), is_init(true) {
         ClearBoard();
         for (auto &move: moves) {
             assert(ChessBoardState::Move(move));
         }
     }
 
-//    bool ChessBoardState::ClearChessAt(uint32_t x, uint32_t y) {
+//    bool ChessBoardState::ClearChessAt(int x, int y) {
 //        if (board[x][y] == EMPTY) {
 //            return false;
 //        }
@@ -57,10 +58,11 @@ namespace gomoku {
             LOG(ERROR) << "move failed, move: " << move;
             return false;
         }
-        is_init= false;
+        is_init = false;
         assert(is_end == 0);
         chess = move.is_black ? BLACK : WHITE;
         update_is_end_from(move.x, move.y);
+        move_num++;
         return true;
     }
 
@@ -85,10 +87,11 @@ namespace gomoku {
             }
         }
         is_end = 0;
-        is_init= true;
+        is_init = true;
+        move_num = 0;
     }
 
-    ChessBoardState::ChessBoardState() : is_end(0),is_init(true) {
+    ChessBoardState::ChessBoardState() : is_end(0), is_init(true), move_num(0) {
         for (int i = 0; i < BOARD_SIZE; i++) {
             for (int j = 0; j < BOARD_SIZE; j++) {
                 board[i][j] = EMPTY;
@@ -105,56 +108,166 @@ namespace gomoku {
         if (is_end) {
             is_end = 0;
         }
+        move_num--;
         return true;
     }
 
-    void ChessBoardState::update_is_end_from(uint32_t x, uint32_t y) {
+    void ChessBoardState::update_is_end_from(int x, int y) {
         assert(board[x][y] != EMPTY);
-
-        std::vector<std::pair<int, int>> dir = {{1,  0},
-                                                {-1, 0},
-                                                {0,  1},
-                                                {0,  -1},
-                                                {1,  1},
-                                                {-1, -1},
-                                                {1,  -1},
-                                                {-1, 1}};
-        std::vector<uint32_t> cnt(8, 0);
-        for (int k = 0; k < 8; k++) {
-            int i = static_cast<int>(x), j = static_cast<int>(y);
-            auto delta = dir[k];
-            while (0 <= i + delta.first && i + delta.first < BOARD_SIZE &&
-                   0 <= j + delta.second && j + delta.second < BOARD_SIZE &&
-                   board[i + delta.first][j + delta.second] == board[x][y]) {
-                i += delta.first;
-                j += delta.second;
-                cnt[k]++;
+//        int dir[8][2] = {{1,  0},
+//                         {-1, 0},
+//                         {0,  1},
+//                         {0,  -1},
+//                         {1,  1},
+//                         {-1, -1},
+//                         {1,  -1},
+//                         {-1, 1}};
+        int cnt[8] = {0};
+        const int board_size = static_cast<int>(BOARD_SIZE);
+        //0
+        {
+            int i = x, j = y;
+            int dx = 1, dy = 0;
+            int max_step = board_size - i;
+            while (max_step-- > 0 &&
+                   board[i + dx][j + dy] == board[x][y]) {
+                i += dx;
+                j += dy;
+                cnt[0]++;
+                if (cnt[0] >= 4) {
+                    is_end = board[x][y] == BLACK ? 1 : -1;
+                    return;
+                }
             }
         }
-        for (int i = 0; i < 8; i += 2) {
-            assert(cnt[i] + cnt[i + 1] <= 4);
-            if (cnt[i] + cnt[i + 1] == 4) {
-                is_end = board[x][y] == BLACK ? 1 : -1;
-//                LOG(INFO) << __func__ << " board is_end:" << is_end << " x:" << x << " y:" << y << " i:" << i
-//                          << "board:" << *this;
-                break;
+        //1
+        {
+            int i = x, j = y;
+            int dx = -1, dy = 0;
+            int max_step = i;
+            while (max_step-- > 0 &&
+                   board[i + dx][j + dy] == board[x][y]) {
+                i += dx;
+                j += dy;
+                cnt[1]++;
+                if (cnt[1] + cnt[0] >= 4) {
+                    is_end = board[x][y] == BLACK ? 1 : -1;
+                    return;
+                }
+            }
+        }
+        //2
+        {
+            int i = x, j = y;
+            int dx = 0, dy = 1;
+            int max_step = board_size - j;
+            while (max_step-- > 0 &&
+                   board[i + dx][j + dy] == board[x][y]) {
+                i += dx;
+                j += dy;
+                cnt[2]++;
+                if (cnt[2] >= 4) {
+                    is_end = board[x][y] == BLACK ? 1 : -1;
+                    return;
+                }
+            }
+        }
+        //3
+        {
+            int i = x, j = y;
+            int dx = 0, dy = -1;
+            int max_step = j;
+            while (max_step-- > 0 &&
+                   board[i + dx][j + dy] == board[x][y]) {
+                i += dx;
+                j += dy;
+                cnt[3]++;
+                if (cnt[3] + cnt[2] >= 4) {
+                    is_end = board[x][y] == BLACK ? 1 : -1;
+                    return;
+                }
+            }
+        }
+        //4
+        {
+            int i = x, j = y;
+            int dx = 1, dy = 1;
+            int max_step = std::min(board_size - i, board_size - j);
+            while (max_step-- > 0 &&
+                   board[i + dx][j + dy] == board[x][y]) {
+                i += dx;
+                j += dy;
+                cnt[4]++;
+                if (cnt[4] >= 4) {
+                    is_end = board[x][y] == BLACK ? 1 : -1;
+                    return;
+                }
+            }
+        }
+        //5
+        {
+            int i = x, j = y;
+            int dx = -1, dy = -1;
+            int max_step = std::min(i, j);
+            while (max_step-- > 0 &&
+                   board[i + dx][j + dy] == board[x][y]) {
+                i += dx;
+                j += dy;
+                cnt[5]++;
+                if (cnt[5] + cnt[4] >= 4) {
+                    is_end = board[x][y] == BLACK ? 1 : -1;
+                    return;
+                }
+            }
+        }
+        //6
+        {
+            int i = x, j = y;
+            int dx = 1, dy = -1;
+            int max_step = std::min(board_size - i, j);
+            while (max_step-- > 0 &&
+                   board[i + dx][j + dy] == board[x][y]) {
+                i += dx;
+                j += dy;
+                cnt[6]++;
+                if (cnt[6] >= 4) {
+                    is_end = board[x][y] == BLACK ? 1 : -1;
+                    return;
+                }
+            }
+        }
+        //7
+        {
+            int i = x, j = y;
+            int dx = -1, dy = 1;
+            int max_step = std::min(i, board_size - j);
+            while (max_step-- > 0 &&
+                   board[i + dx][j + dy] == board[x][y]) {
+                i += dx;
+                j += dy;
+                cnt[7]++;
+                if (cnt[7] + cnt[6] >= 4) {
+                    is_end = board[x][y] == BLACK ? 1 : -1;
+                    return;
+                }
             }
         }
     }
 
     void ChessBoardState::GetMoves(bool is_black, std::vector<ChessMove> *moves) const {
         assert(is_end == 0);
+        moves->reserve(BOARD_SIZE * BOARD_SIZE);
         for (int i = 0; i < BOARD_SIZE; i++) {
             for (int j = 0; j < BOARD_SIZE; j++) {
                 if (board[i][j] == EMPTY) {
-                    moves->push_back(ChessMove(is_black, i, j));
+                    moves->emplace_back(is_black, i, j);
                 }
             }
         }
     }
 
-    void ChessBoardState::GetPositionVec(std::vector<std::pair<uint32_t, uint32_t>> *black_pos,
-                                         std::vector<std::pair<uint32_t, uint32_t>> *white_pos) const {
+    void ChessBoardState::GetPositionVec(std::vector<std::pair<int, int>> *black_pos,
+                                         std::vector<std::pair<int, int>> *white_pos) const {
         for (int i = 0; i < BOARD_SIZE; i++) {
             for (int j = 0; j < BOARD_SIZE; j++) {
                 if (board[i][j] == BLACK) {
@@ -166,7 +279,7 @@ namespace gomoku {
         }
     }
 
-    void ChessBoardState::GetPositionMap(std::map<std::pair<uint32_t, uint32_t>, Chess> *pos2chess) const {
+    void ChessBoardState::GetPositionMap(std::map<std::pair<int, int>, Chess> *pos2chess) const {
         for (int i = 0; i < BOARD_SIZE; i++) {
             for (int j = 0; j < BOARD_SIZE; j++) {
                 if (board[i][j] != EMPTY) {
@@ -216,15 +329,130 @@ namespace gomoku {
         return is_init;
     }
 
-    ChessMove::ChessMove(bool isBlack, uint32_t x, uint32_t y) : is_black(isBlack), x(x), y(y) {
+    ChessMove ChessBoardState::getRandMove(bool is_black) {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<int> dist(0, BOARD_SIZE - 1);
+        int try_num = BOARD_SIZE;
+        while (try_num--) {
+            int x = dist(gen);
+            int y = dist(gen);
+            if (GetChessAt(x, y) == Chess::EMPTY) {
+                return {is_black, x, y};
+            }
+        }
+        std::vector<ChessMove> moves;
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                if (GetChessAt(i, j) == Chess::EMPTY) {
+                    moves.emplace_back(is_black, i, j);
+                }
+            }
+        }
+        if (moves.empty()) {
+            return ChessMove();
+        }
+        std::uniform_int_distribution<int> dist2(0, moves.size() - 1);
+        return moves[dist2(gen)];
     }
 
-    ChessMove::ChessMove() : is_black(true), x(UINT32_MAX), y(UINT32_MAX) {
+    BoardResult ChessBoardState::End() const {
+        switch (is_end) {
+            case 0:
+                return BoardResult::NOT_END;
+            case 1:
+                return BoardResult::BLACK_WIN;
+            case -1:
+                return BoardResult::WHITE_WIN;
+            default:
+                assert(0);
+        }
+    }
+
+    int ChessBoardState::GetMoveNums() const{
+        return move_num;
+    }
+
+    ChessMove ChessBoardState::GetNthMove(bool is_black, int index) {
+        int cnt = 0;
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                if (GetChessAt(i, j) == Chess::EMPTY) {
+                    if (cnt++ == index) {
+                        return {is_black, i, j};
+                    }
+                }
+            }
+        }
+        assert(false);
+    }
+
+    bool ChessBoardState::IsCutMove(const ChessMove &move) const {
+        const int &x = move.x;
+        const int &y = move.y;
+
+        // 上
+        if (x - 1 >= 0 && board[x - 1][y] != Chess::EMPTY) return false;
+        // 下
+        if (x + 1 < BOARD_SIZE && board[x + 1][y] != Chess::EMPTY) return false;
+        // 左
+        if (y - 1 >= 0 && board[x][y - 1] != Chess::EMPTY) return false;
+        // 右
+        if (y + 1 < BOARD_SIZE && board[x][y + 1] != Chess::EMPTY) return false;
+        // 左上
+        if (x - 1 >= 0 && y - 1 >= 0 && board[x - 1][y - 1] != Chess::EMPTY) return false;
+        // 右上
+        if (x - 1 >= 0 && y + 1 < BOARD_SIZE && board[x - 1][y + 1] != Chess::EMPTY) return false;
+        // 左下
+        if (x + 1 < BOARD_SIZE && y - 1 >= 0 && board[x + 1][y - 1] != Chess::EMPTY) return false;
+        // 右下
+        if (x + 1 < BOARD_SIZE && y + 1 < BOARD_SIZE && board[x + 1][y + 1] != Chess::EMPTY) return false;
+
+        // 上
+        if (x - 2 >= 0 && board[x - 2][y] != Chess::EMPTY) return false;
+        // 下
+        if (x + 2 < BOARD_SIZE && board[x + 2][y] != Chess::EMPTY) return false;
+        // 左
+        if (y - 2 >= 0 && board[x][y - 2] != Chess::EMPTY) return false;
+        // 右
+        if (y + 2 < BOARD_SIZE && board[x][y + 2] != Chess::EMPTY) return false;
+        // 左上
+        if (x - 2 >= 0 && y - 2 >= 0 && board[x - 2][y - 2] != Chess::EMPTY) return false;
+        // 右上
+        if (x - 2 >= 0 && y + 2 < BOARD_SIZE && board[x - 2][y + 2] != Chess::EMPTY) return false;
+        // 左下
+        if (x + 2 < BOARD_SIZE && y - 2 >= 0 && board[x + 2][y - 2] != Chess::EMPTY) return false;
+        // 右下
+        if (x + 2 < BOARD_SIZE && y + 2 < BOARD_SIZE && board[x + 2][y + 2] != Chess::EMPTY) return false;
+
+        return true;
+    }
+
+    ChessMove::ChessMove(bool isBlack, int x, int y) : is_black(isBlack), x(x), y(y) {
+    }
+
+    ChessMove::ChessMove() : is_black(true), x(-1), y(-1) {
     }
 
     std::ostream &operator<<(std::ostream &os, const ChessMove &move) {
-        os << "is_black: " << move.is_black << " x: " << move.x << " y: " << move.y;
+        os << " (" << move.x << "," << move.y << ",";
+        if (move.is_black) {
+            os << "b";
+        } else {
+            os << "w";
+        }
+        os << ") ";
         return os;
+    }
+
+    bool ChessMove::operator==(const ChessMove &rhs) const {
+        return is_black == rhs.is_black &&
+               x == rhs.x &&
+               y == rhs.y;
+    }
+
+    bool ChessMove::operator!=(const ChessMove &rhs) const {
+        return !(rhs == *this);
     }
 
 }

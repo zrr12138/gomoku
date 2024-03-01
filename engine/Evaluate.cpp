@@ -16,7 +16,7 @@ namespace gomoku {
             return BLACK_LOSS;
         }
         int64_t result = 0;
-        std::map<std::pair<uint32_t, uint32_t>, Chess> pos2chess;
+        std::map<std::pair<int, int>, Chess> pos2chess;
         board.GetPositionMap(&pos2chess);
         std::vector<std::pair<int, int>> dir = {{1,  0},
                                                 {-1, 0},
@@ -112,7 +112,7 @@ namespace gomoku {
             }
         }
 
-        std::map<std::pair<uint32_t, uint32_t>, Chess> pos2chess;
+        std::map<std::pair<int, int>, Chess> pos2chess;
         board.GetPositionMap(&pos2chess);
         std::vector<std::pair<int, int>> dir = {{1,  0},
                                                 {-1, 0},

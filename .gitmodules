@@ -1,0 +1,6 @@
+[submodule "engine/third-party/glog"]
+	path = engine/third-party/glog
+	url = https://github.com/google/glog.git
+[submodule "engine/third-party/gflags"]
+	path = engine/third-party/gflags
+	url = https://github.com/gflags/gflags.git

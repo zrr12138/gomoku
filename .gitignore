@@ -29,4 +29,3 @@
 *.exe
 *.out
 *.app
-/engine/third-party/glog/

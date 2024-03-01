@@ -158,6 +158,16 @@ namespace gomoku {
                 common::ReadLockGuard gurad(best_move_lock_);
                 move_node = best_move_node_;
             }
+            if (move_node.second == nullptr && index < engine_->thread_num_) {
+                bool fisrt_loop = true;
+                while (true) {
+                    if (!fisrt_loop)
+                        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                    common::ReadLockGuard gurad1(move2node_lock_);
+                    if (!move2node_.empty()) break;
+                    fisrt_loop = false;
+                }
+            }
             if (index % 64 == 0 || move_node.second == nullptr) {
                 common::ReadLockGuard gurad1(move2node_lock_);
                 auto best_move = *std::max_element(move2node_.begin(), move2node_.end(),

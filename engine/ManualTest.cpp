@@ -7,6 +7,7 @@
 #include "MCTSEngine.h"
 #include "ChessBoardState.h"
 #include "common_flags.h"
+#include <thread>
 
 DEFINE_bool(human_first, true, "");
 
@@ -15,6 +16,14 @@ void EngineManualTest() {
     gomoku::ChessBoardState board;
     bool is_black = FLAGS_human_first;
     engine.StartSearch(board, is_black);
+    std::atomic<bool> stop(false);
+    auto LogPath = [&engine, &stop]() -> void {
+        while (!stop) {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            engine.LogPath();
+        }
+    };
+    std::thread t(LogPath);
     while (!board.IsEnd()) {
         board.PrintOnTerminal();
         if (is_black) {
@@ -35,12 +44,14 @@ void EngineManualTest() {
         is_black = !is_black;
     }
     engine.Stop();
+    stop = true;
+    t.join();
 }
 
 int main(int argc, char *argv[]) {
     // Initialize Google’s logging library.
     gflags::ParseCommandLineFlags(&argc, &argv, false);
-    google::InitGoogleLogging("gomoku");
+    google::InitGoogleLogging("ManualTest");
     FLAGS_log_dir = ".";
     FLAGS_v = 2;
     EngineManualTest();

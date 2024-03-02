@@ -123,6 +123,37 @@ namespace gomoku {
         return root_node_->n;
     }
 
+    void MCTSEngine::LogPath() {
+        std::shared_ptr<Node> root_node;
+        {
+            common::ReadLockGuard gurad(root_lock_);
+            root_node = root_node_;
+        }
+        std::stringstream s;
+        LogPathNode(s, root_node.get());
+        LOG(INFO) << s.str();
+    }
+
+    void MCTSEngine::LogPathNode(std::stringstream &line, Node *node) {
+        std::pair<ChessMove, std::shared_ptr<Node>> *move_node = nullptr;
+        bool is_black = node->is_black;
+        {
+            common::ReadLockGuard guard(node->move2node_lock_);
+            if(node->move2node_.empty()){
+                return ;
+            }
+            move_node = &(*std::max_element(node->move2node_.begin(), node->move2node_.end(),
+                                            [is_black](const std::pair<ChessMove, std::shared_ptr<Node>> &x,
+                                                       const std::pair<ChessMove, std::shared_ptr<Node>> &y) -> bool {
+                                                return x.second->GetWinRate(is_black) <
+                                                       y.second->GetWinRate(is_black);
+                                            }));
+        }
+        line << move_node->first << " (" << move_node->second->GetWinRate(is_black) << ") " << " ---> ";
+        LogPathNode(line, move_node->second.get());
+    }
+
+
     Node::Node(bool isBlack, MCTSEngine *engine) : is_black(isBlack), n(0), black_win_count(0), white_win_count(0),
                                                    engine_(engine), access_cnt(0), inited(false),
                                                    unexpanded_move_size(0), unexpanded_moves(nullptr) {

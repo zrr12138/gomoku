@@ -18,7 +18,7 @@
 int main(int argc, char *argv[]) {
     // Initialize Google’s logging library.
     gflags::ParseCommandLineFlags(&argc, &argv, false);
-    google::InitGoogleLogging("gomoku");
+    google::InitGoogleLogging("PerformanceTest");
     FLAGS_log_dir = ".";
     FLAGS_v = 2;
 
@@ -43,6 +43,7 @@ int main(int argc, char *argv[]) {
     board.PrintOnTerminal();
     std::cout << "engine move:" << move;
     engine.Stop();
-    engine.DumpTree();
+    //engine.DumpTree();
+    engine.LogPath();
     std::cout << "root_n:" << engine.GetRootN();
 }

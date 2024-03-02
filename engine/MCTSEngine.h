@@ -68,6 +68,8 @@ namespace gomoku {
 
         int64_t GetRootN();
 
+        void LogPath();
+
     private:
         const double C;
         std::atomic<bool> stop_;
@@ -80,6 +82,9 @@ namespace gomoku {
         void LoopExpandTree();
 
         void PrintNode(std::ostream &os, Node *node, ChessMove move, int deep);
+
+        void LogPathNode(std::stringstream &line, Node *node);
+
     };
 };
 

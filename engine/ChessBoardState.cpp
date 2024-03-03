@@ -123,7 +123,7 @@ namespace gomoku {
 //                         {1,  -1},
 //                         {-1, 1}};
         int cnt[8] = {0};
-        const int board_size = static_cast<int>(BOARD_SIZE);
+        const int board_size = static_cast<int>(BOARD_SIZE - 1);
         //0
         {
             int i = x, j = y;

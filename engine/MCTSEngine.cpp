@@ -139,8 +139,8 @@ namespace gomoku {
         bool is_black = node->is_black;
         {
             common::ReadLockGuard guard(node->move2node_lock_);
-            if(node->move2node_.empty()){
-                return ;
+            if (node->move2node_.empty()) {
+                return;
             }
             move_node = &(*std::max_element(node->move2node_.begin(), node->move2node_.end(),
                                             [is_black](const std::pair<ChessMove, std::shared_ptr<Node>> &x,
@@ -209,6 +209,10 @@ namespace gomoku {
                 common::WriteLockGuard gurad2(best_move_lock_);
                 best_move_node_ = best_move;
                 move_node = best_move;
+                if (unexpanded_moves != nullptr && move2node_.size() == unexpanded_move_size) {
+                    delete[] unexpanded_moves;
+                    unexpanded_moves = nullptr;
+                }
             }
             assert(move_node.second);
             auto &move = move_node.first;

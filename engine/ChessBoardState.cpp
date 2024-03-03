@@ -51,8 +51,8 @@ namespace gomoku {
 //    }
 
     bool ChessBoardState::Move(ChessMove move) {
-        assert(move.x < BOARD_SIZE);
-        assert(move.y < BOARD_SIZE);
+        assert(0 <= move.x && move.x < BOARD_SIZE);
+        assert(0 <= move.y && move.y < BOARD_SIZE);
         auto &chess = board[move.x][move.y];
         if (chess != EMPTY) {
             LOG(ERROR) << "move failed, move: " << move;
@@ -369,7 +369,7 @@ namespace gomoku {
         }
     }
 
-    int ChessBoardState::GetMoveNums() const{
+    int ChessBoardState::GetMoveNums() const {
         return move_num;
     }
 

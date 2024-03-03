@@ -49,7 +49,6 @@ namespace gomoku {
 
     struct SearchCtx {
         ChessBoardState board;
-        std::vector<ChessMove> moves_;
     };
 
     class MCTSEngine {
